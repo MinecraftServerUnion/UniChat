@@ -10,7 +10,5 @@ import java.util.List;
 public interface ChannelHandler {
     void handle(@Nonnull SimplePlayer player, @Nonnull String message);
 
-    List<Player> recipients(@Nonnull SimplePlayer player);
-
     default void destroy() {}
 }

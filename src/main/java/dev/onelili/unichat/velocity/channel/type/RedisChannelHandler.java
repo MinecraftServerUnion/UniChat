@@ -4,7 +4,6 @@ import com.velocitypowered.api.proxy.Player;
 import dev.onelili.unichat.velocity.UniChat;
 import dev.onelili.unichat.velocity.channel.Channel;
 import dev.onelili.unichat.velocity.channel.ChannelHandler;
-import dev.onelili.unichat.velocity.handler.RoomHandler;
 import dev.onelili.unichat.velocity.message.Message;
 import dev.onelili.unichat.velocity.module.PatternModule;
 import dev.onelili.unichat.velocity.util.Logger;
@@ -51,7 +50,6 @@ public class RedisChannelHandler implements ChannelHandler {
                         MapTree cont = MapTree.fromJson(messageTree);
                         Component message = MiniMessage.miniMessage().deserialize(cont.getString("msg"));
                         String sender = cont.getString("sender");
-                        String room = cont.getString("room"); //todo: room
                         Message msg = new Message(channel.getChannelConfig().getString("format"));
                         msg.add("player", sender);
                         msg.add("channel", channel.getDisplayName());
@@ -86,14 +84,6 @@ public class RedisChannelHandler implements ChannelHandler {
         MapTree cont =  new MapTree()
                 .put("msg", MiniMessage.miniMessage().serialize(PatternModule.handleMessage(player.player, message)))
                 .put("sender", player.getName());
-        if(RoomHandler.rooms.containsKey(player)){
-            cont.put("room", RoomHandler.rooms.get(player));
-        }
         jedis.publish("unichat-channel-" + channel.getId(), cont.toJson());
-    }
-
-    @Override
-    public List<Player> recipients(@NotNull SimplePlayer player) {
-        return UniChat.getProxy().getAllPlayers().stream().toList();
     }
 }

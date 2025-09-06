@@ -1,6 +1,7 @@
 package dev.onelili.unichat.velocity.module;
 
 import com.velocitypowered.api.proxy.Player;
+import dev.onelili.unichat.velocity.UniChat;
 import dev.onelili.unichat.velocity.channel.Channel;
 import dev.onelili.unichat.velocity.util.Logger;
 import net.kyori.adventure.text.Component;
@@ -25,7 +26,7 @@ public abstract class PatternModule {
             char c = message.charAt(i);
             if(c=='@'){
                 if(Channel.getPlayerChannel(sender) != null) {
-                    List<Player> players = new ArrayList<>(Objects.requireNonNull(Channel.getPlayerChannel(sender)).getRecipients(sender));
+                    List<Player> players = new ArrayList<>(UniChat.getProxy().getAllPlayers());
                     players.sort(Comparator.comparingInt((Player p) -> p.getUsername().length()));
                     outer:
                     for (Player p : players) {

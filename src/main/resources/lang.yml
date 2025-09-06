@@ -1,5 +1,12 @@
 command:
   cannot-execute-from-console: "&c该命令必须由玩家执行!"
   joined-channel: "&a成功加入 %channel% &a频道"
+  invalid-arguments: "&c无效的参数!"
+
+  not-in-room: "&c你不在任何房间中! 请先使用/room create创建房间!"
+  joined-room: "&a成功加入房间 &b%room_code%&a! &a其他玩家可以使用&7 /room %room_code% &a加入房间"
+  room-not-found: "&c该房间不存在!"
+  invited-others: "&a成功邀请&b %player%&a 加入聊天房间!"
+  invited-to-room: "&a你已被邀请加入聊天房间 &b%room_code%&a! &a&l<click:run_command:'/room %room_code%'>[点击加入]</click>"
 mention:
   bossbar-title: "&e&l%sender% 提到了你!"

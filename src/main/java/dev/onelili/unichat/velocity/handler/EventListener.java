@@ -16,13 +16,21 @@ import javax.annotation.Nonnull;
 public class EventListener {
     @Subscribe(priority = Short.MIN_VALUE)
     public void onPlayerChat(@Nonnull PlayerChatEvent event) {
-        Channel channel = Channel.getPlayerChannel(event.getPlayer());
+        Channel channel;
+        String message;
+        if(Channel.channelPrefixes.containsKey(event.getMessage().substring(0, 1))){
+            channel = Channel.channelPrefixes.get(event.getMessage().substring(0, 1));
+            message = event.getMessage().substring(1);
+        }else{
+            channel = Channel.getPlayerChannel(event.getPlayer());
+            message = event.getMessage();
+        }
         if(channel == null) return;
         if(channel.getHandler()==null){
             Component component = new Message(channel.getChannelConfig().getString("format"))
                     .add("player", event.getPlayer().getUsername())
                     .add("channel", channel.getDisplayName())
-                    .toComponent().append(PatternModule.handleMessage(event.getPlayer(), event.getMessage()));
+                    .toComponent().append(PatternModule.handleMessage(event.getPlayer(), message));
             if(channel.isLogToConsole())
                 UniChat.getProxy().getConsoleCommandSource().sendMessage(component);
             if(event.getPlayer().getCurrentServer().isPresent()) {
@@ -48,7 +56,7 @@ public class EventListener {
         event.setResult(PlayerChatEvent.ChatResult.denied());
         UniChat.getProxy().getScheduler()
                 .buildTask(UniChat.instance,
-                        () -> Channel.handleChat(event.getPlayer(), channel, event.getMessage()))
+                        () -> Channel.handleChat(event.getPlayer(), channel, message))
                 .schedule();
     }
     @Subscribe
@@ -59,5 +67,6 @@ public class EventListener {
     @Subscribe
     public void onPlayerLeave(@Nonnull DisconnectEvent event){
         Channel.getPlayerChannels().remove(event.getPlayer().getUniqueId());
+        PlayerData.playerDataMap.remove(event.getPlayer().getUniqueId());
     }
 }

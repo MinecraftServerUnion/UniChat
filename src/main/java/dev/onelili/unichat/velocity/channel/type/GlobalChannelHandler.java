@@ -39,9 +39,4 @@ public class GlobalChannelHandler implements ChannelHandler {
         if(channel.isLogToConsole())
             UniChat.getProxy().getConsoleCommandSource().sendMessage(component);
     }
-
-    @Override
-    public List<Player> recipients(@NotNull SimplePlayer player) {
-        return UniChat.getProxy().getAllPlayers().stream().toList();
-    }
 }
