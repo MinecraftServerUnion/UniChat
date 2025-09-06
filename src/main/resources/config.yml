@@ -1,0 +1,39 @@
+channels:
+  local:
+    name: "&e本地"
+    type: LOCAL
+
+    # Messages from players in these servers will NOT be sent to the backend
+    # but they will directly be handled by this plugin on the proxy level
+    force-handle-servers:
+      - "server1"
+      - "server2"
+    format: "&7[&f%player%&7] &r" # This prefix will only be used if chat is processed on this plugin
+    commands:
+      - local
+      - l
+  global:
+    name: "全局"
+    type: GLOBAL
+    format: "&a[全局]&7[&f%player%&7] &r" # This is the prefix of the message sent to the global channel
+    commands:
+      - global
+      - g
+  crossserver:
+    name: "跨服"
+    type: REDIS
+    format: "&b[跨服]&7[&f%player%&7] &r"
+    redis-address: "0.0.0.0"
+    redis-port: 8080
+    redis-user: "admin"
+    redis-password: "123456"
+    commands:
+      - crossserver
+      - cs
+
+module:
+  mention:
+    bossbar-progress-decrease: 0.05 # 0-1, usually 0.05 is fine
+    sound-effect-id: "minecraft:entity.experience_orb.pickup"
+    sound-effect-volume: 1 # 0-1
+    sound-effect-pitch: 1 # 0.5-2

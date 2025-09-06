@@ -1,0 +1,5 @@
+command:
+  cannot-execute-from-console: "&c该命令必须由玩家执行!"
+  joined-channel: "&a成功加入 %channel% &a频道"
+mention:
+  bossbar-title: "&e&l%sender% 提到了你!"

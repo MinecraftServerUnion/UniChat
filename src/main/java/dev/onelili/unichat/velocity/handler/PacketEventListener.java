@@ -1,0 +1,102 @@
+package dev.onelili.unichat.velocity.handler;
+
+import com.github.retrooper.packetevents.event.PacketListenerPriority;
+import com.github.retrooper.packetevents.event.ProtocolPacketEvent;
+import com.github.retrooper.packetevents.event.SimplePacketListenerAbstract;
+import com.github.retrooper.packetevents.event.simple.PacketPlayReceiveEvent;
+import com.github.retrooper.packetevents.event.simple.PacketPlaySendEvent;
+import com.github.retrooper.packetevents.protocol.chat.message.ChatMessage_v1_16;
+import com.github.retrooper.packetevents.protocol.chat.message.reader.ChatMessageProcessor;
+import com.github.retrooper.packetevents.protocol.player.ClientVersion;
+import com.github.retrooper.packetevents.wrapper.PacketWrapper;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerPosition;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChatMessage;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerPositionAndLook;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSoundEffect;
+import com.velocitypowered.api.proxy.Player;
+import dev.onelili.unichat.velocity.UniChat;
+import dev.onelili.unichat.velocity.channel.Channel;
+import dev.onelili.unichat.velocity.message.Message;
+import dev.onelili.unichat.velocity.module.PatternModule;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+
+import javax.annotation.Nonnull;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Locale;
+import java.util.Objects;
+
+public class PacketEventListener extends SimplePacketListenerAbstract {
+    public PacketEventListener() {
+        super(PacketListenerPriority.NORMAL);
+    }
+
+    @Override
+    public void onPacketPlaySend(@Nonnull PacketPlaySendEvent event) {
+        switch(event.getPacketType()) {
+            case CHAT_MESSAGE -> {
+                WrapperPlayServerChatMessage packet = new WrapperPlayServerChatMessage(event);
+                try {
+                    ChatMessage_v1_16 message = (ChatMessage_v1_16) packet.getMessage();
+                    var senderOpt = UniChat.getProxy().getPlayer(message.getSenderUUID());
+                    if (senderOpt.isPresent()) {
+                        Player sender = senderOpt.get();
+                        String messageText = MiniMessage.miniMessage().serialize(message.getChatContent());
+                        if(sender.getCurrentServer().isPresent()){
+                            String serverid = sender.getCurrentServer().get().getServerInfo().getName();
+                            Channel channel = Channel.getPlayerChannel(sender);
+                            if(channel == null || channel.getHandler() != null) return;
+                            if(channel.getChannelConfig().getStringList("force-handle-servers").contains(serverid)) return;
+
+                            Component component = new Message(channel.getChannelConfig().getString("format"))
+                                    .add("player", sender.getUsername())
+                                    .add("channel", channel.getDisplayName())
+                                    .toComponent().append(PatternModule.handleMessage(event.getPlayer(), messageText));
+                            Player receiver = event.getPlayer();
+                            receiver.sendMessage(component);
+                            event.setCancelled(true);
+                        }
+                    }
+                }catch (ClassCastException e){
+                    UniChat.getLogger().debug("Failed to cast message in chat packet: "+e.getMessage());
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onPacketPlayReceive(@Nonnull PacketPlayReceiveEvent event) {
+        switch(event.getPacketType()) {
+            case PLAYER_POSITION -> {
+                WrapperPlayClientPlayerPosition wrapper = new WrapperPlayClientPlayerPosition(event);
+                Player player = event.getPlayer();
+                PlayerData.playerDataMap.computeIfAbsent(player.getUniqueId(), e->new PlayerData())
+                        .position = wrapper.getPosition();
+            }
+        }
+    }
+
+    private void listenTo(ProtocolPacketEvent event){ // to debug
+        try {
+            com.github.retrooper.packetevents.wrapper.PacketWrapper<?> packet=null;
+            for(var i: event.getPacketType().getWrapperClass().getConstructors()){
+                if(i.getParameterCount()==1 && i.getParameterTypes()[0].isAssignableFrom(event.getClass())){
+                    packet = (com.github.retrooper.packetevents.wrapper.PacketWrapper<?>) i.newInstance(event);
+                    break;
+                }
+            }
+            System.out.println(event.getClass().getSimpleName() + "("+ ((Player)event.getPlayer()).getUsername() +"): "+event.getPacketType());
+            for(Field field : packet.getClass().getDeclaredFields()){
+                field.setAccessible(true);
+                String cont = Objects.toString(field.get(packet));
+                if(cont.length() > 50){
+                    cont = cont.substring(0, 30) + "..." + cont.substring(cont.length() - 20);
+                }
+                System.out.println("- " + field.getName() + " : " + cont);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+}

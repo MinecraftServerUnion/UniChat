@@ -8,8 +8,12 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
-import dev.onelili.unichat.velocity.listener.EventListener;
-import dev.onelili.unichat.velocity.listener.PacketEventListener;
+import dev.onelili.unichat.velocity.channel.Channel;
+import dev.onelili.unichat.velocity.handler.EventListener;
+import dev.onelili.unichat.velocity.handler.PacketEventListener;
+import dev.onelili.unichat.velocity.message.MessageLoader;
+import dev.onelili.unichat.velocity.module.PatternModule;
+import dev.onelili.unichat.velocity.util.Config;
 import io.github.retrooper.packetevents.velocity.factory.VelocityPacketEventsBuilder;
 import lombok.Getter;
 import org.slf4j.Logger;
@@ -17,6 +21,8 @@ import org.slf4j.Logger;
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.UUID;
 
 @Plugin(
         id = "unichat",
@@ -29,31 +35,48 @@ import java.nio.file.Path;
 )
 public class UniChat {
     @Getter
-    private static UniChat instance;
+    public static UniChat instance;
     @Getter
-    private final ProxyServer proxy;
+    private static ProxyServer proxy;
     @Getter
-    private final Logger logger;
+    private static Logger logger;
     @Getter
-    private final File dataDirectory;
+    private static File dataDirectory;
 
-    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Inject
     public UniChat(@Nonnull ProxyServer proxy, @Nonnull Logger logger, @Nonnull @DataDirectory Path dataDirectory) {
         instance = this;
-        this.proxy = proxy;
-        this.logger = logger;
-        this.dataDirectory = dataDirectory.toFile();
-        this.dataDirectory.mkdirs();
+        UniChat.proxy = proxy;
+        UniChat.logger = logger;
+        UniChat.dataDirectory = dataDirectory.toFile();
     }
 
     @Subscribe
     public void onProxyInitialization(@Nonnull ProxyInitializeEvent event) {
         proxy.getEventManager().register(this, new EventListener());
+        Config.init();
+        MessageLoader.initialize();
         PacketEvents.setAPI(VelocityPacketEventsBuilder.build(proxy, proxy.getPluginManager().fromInstance(this).orElseThrow(), logger, dataDirectory.toPath()));
         PacketEvents.getAPI().load();
         PacketEvents.getAPI().getEventManager().registerListener(new PacketEventListener());
         PacketEvents.getAPI().init();
+
+        PatternModule.registerDefaults();
+
+        Channel.loadChannels();
+    }
+
+    public void reload(){
+        Config.reload();
+        for(Channel channel : Channel.getChannels().values()){
+            if(channel.getHandler()!= null)
+                channel.getHandler().destroy();
+        }
+        Channel.getChannels().clear();
+        Channel.loadChannels();
+        for(UUID uuid : new HashSet<>(Channel.getPlayerChannels().keySet())){
+            Channel.getPlayerChannels().put(uuid, Channel.defaultChannel);
+        }
     }
 
     @Subscribe

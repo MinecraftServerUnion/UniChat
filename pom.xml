@@ -31,6 +31,7 @@
     </profiles>
 
     <build>
+        <finalName>UniChat-Alpha-${project.version}</finalName>
         <defaultGoal>clean package</defaultGoal>
         <resources>
             <resource>
@@ -88,12 +89,12 @@
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <relocations>
                                 <relocation>
-                                    <pattern>com.github.retrooper</pattern>
-                                    <shadedPattern>com.github.retrooper</shadedPattern>
+                                    <pattern>redis.clients</pattern>
+                                    <shadedPattern>dev.onelili.unichat.lib.redis</shadedPattern>
                                 </relocation>
                                 <relocation>
-                                    <pattern>net.kyori</pattern>
-                                    <shadedPattern>net.kyori</shadedPattern>
+                                    <pattern>com.github.retrooper.packetevents</pattern>
+                                    <shadedPattern>dev.onelili.unichat.lib.packetevents</shadedPattern>
                                 </relocation>
                             </relocations>
                         </configuration>
@@ -111,6 +112,10 @@
         <repository>
             <id>codemc-releases</id>
             <url>https://repo.codemc.io/repository/maven-releases/</url>
+        </repository>
+        <repository>
+            <id>jitpack</id>
+            <url>https://jitpack.io</url>
         </repository>
     </repositories>
 
@@ -134,10 +139,16 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>net.kyori</groupId>
-            <artifactId>adventure-api</artifactId>
-            <version>4.24.0</version>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>6.2.0</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.miniplaceholders</groupId>
+            <artifactId>miniplaceholders-api</artifactId>
+            <version>3.0.1</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>
