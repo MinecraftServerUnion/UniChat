@@ -1,4 +1,4 @@
-package dev.onelili.unichat;
+package dev.onelili.unichat.velocity;
 
 import com.github.retrooper.packetevents.PacketEvents;
 import com.google.inject.Inject;
@@ -8,7 +8,8 @@ import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
-import dev.onelili.unichat.listener.PacketEventListener;
+import dev.onelili.unichat.velocity.listener.EventListener;
+import dev.onelili.unichat.velocity.listener.PacketEventListener;
 import io.github.retrooper.packetevents.velocity.factory.VelocityPacketEventsBuilder;
 import lombok.Getter;
 import org.slf4j.Logger;
@@ -48,6 +49,7 @@ public class UniChat {
 
     @Subscribe
     public void onProxyInitialization(@Nonnull ProxyInitializeEvent event) {
+        proxy.getEventManager().register(this, new EventListener());
         PacketEvents.setAPI(VelocityPacketEventsBuilder.build(proxy, proxy.getPluginManager().fromInstance(this).orElseThrow(), logger, dataDirectory.toPath()));
         PacketEvents.getAPI().load();
         PacketEvents.getAPI().getEventManager().registerListener(new PacketEventListener());

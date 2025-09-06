@@ -1,4 +1,4 @@
-package dev.onelili.unichat.listener;
+package dev.onelili.unichat.velocity.listener;
 
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.github.retrooper.packetevents.event.SimplePacketListenerAbstract;
@@ -14,9 +14,11 @@ public class PacketEventListener extends SimplePacketListenerAbstract {
 
     @Override
     public void onPacketPlaySend(@Nonnull PacketPlaySendEvent event) {
+        switch(event.getPacketType()) {}
     }
 
     @Override
     public void onPacketPlayReceive(@Nonnull PacketPlayReceiveEvent event) {
+        switch(event.getPacketType()) {}
     }
 }
