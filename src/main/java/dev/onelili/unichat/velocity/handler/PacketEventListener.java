@@ -14,6 +14,7 @@ import dev.onelili.unichat.velocity.UniChat;
 import dev.onelili.unichat.velocity.channel.Channel;
 import dev.onelili.unichat.velocity.message.Message;
 import dev.onelili.unichat.velocity.module.PatternModule;
+import dev.onelili.unichat.velocity.util.Logger;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 
@@ -54,21 +55,15 @@ public class PacketEventListener extends SimplePacketListenerAbstract {
                             event.setCancelled(true);
                         }
                     }
-                }catch (ClassCastException e){
-                    UniChat.getLogger().debug("Failed to cast message in chat packet: "+e.getMessage());
+                } catch (ClassCastException e){
+                    UniChat.getLogger().debug("Failed to cast message in chat packet: {}", e.getMessage());
                 }
             }
             case PLAYER_POSITION_AND_LOOK -> {
                 WrapperPlayServerPlayerPositionAndLook wrapper = new WrapperPlayServerPlayerPositionAndLook(event);
                 Player player = event.getPlayer();
-                Objects.requireNonNull(PlayerData.getPlayerDataMap().putIfAbsent(player.getUniqueId(), new PlayerData()))
+                Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()))
                         .setPosition(wrapper.getPosition());
-            }
-            case SET_PLAYER_INVENTORY -> {
-                WrapperPlayServerSetPlayerInventory wrapper = new WrapperPlayServerSetPlayerInventory(event);
-                Player player = event.getPlayer();
-                Objects.requireNonNull(PlayerData.getPlayerDataMap().putIfAbsent(player.getUniqueId(), new PlayerData()))
-                        .getInventory().put(wrapper.getSlot(), wrapper.getStack());
             }
             case HELD_ITEM_CHANGE -> {
                 WrapperPlayServerHeldItemChange wrapper = new WrapperPlayServerHeldItemChange(event);
@@ -76,6 +71,14 @@ public class PacketEventListener extends SimplePacketListenerAbstract {
                 Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()))
                         .setHandItem(wrapper.getSlot());
                 listenTo(event);
+            }
+            case SET_SLOT -> {
+                WrapperPlayServerSetSlot wrapper = new WrapperPlayServerSetSlot(event);
+                Player player = event.getPlayer();
+                Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()))
+                        .getInventory().put(wrapper.getSlot(), wrapper.getItem());
+                listenTo(event);
+                Logger.info(PlayerData.getPlayerData(player).toString());
             }
         }
     }
@@ -86,13 +89,13 @@ public class PacketEventListener extends SimplePacketListenerAbstract {
             case PLAYER_POSITION -> {
                 WrapperPlayClientPlayerPosition wrapper = new WrapperPlayClientPlayerPosition(event);
                 Player player = event.getPlayer();
-                Objects.requireNonNull(PlayerData.getPlayerDataMap().putIfAbsent(player.getUniqueId(), new PlayerData()))
+                Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()))
                         .setPosition(wrapper.getPosition());
             }
             case HELD_ITEM_CHANGE -> {
                 WrapperPlayClientHeldItemChange wrapper = new WrapperPlayClientHeldItemChange(event);
                 Player player = event.getPlayer();
-                Objects.requireNonNull(PlayerData.getPlayerDataMap().putIfAbsent(player.getUniqueId(), new PlayerData()))
+                Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()))
                         .setHandItem(wrapper.getSlot());
                 listenTo(event);
             }
