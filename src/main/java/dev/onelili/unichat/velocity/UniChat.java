@@ -4,6 +4,7 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.google.inject.Inject;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.Subscribe;
+import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
@@ -51,12 +52,14 @@ public class UniChat {
         UniChat.dataDirectory = dataDirectory.toFile();
     }
 
+    @SuppressWarnings("UnstableApiUsage")
     @Subscribe
     public void onProxyInitialization(@Nonnull ProxyInitializeEvent event) {
         proxy.getEventManager().register(this, new EventListener());
         Config.init();
         MessageLoader.initialize();
         PacketEvents.setAPI(VelocityPacketEventsBuilder.build(proxy, proxy.getPluginManager().fromInstance(this).orElseThrow(), logger, dataDirectory.toPath()));
+        PacketEvents.getAPI().getSettings().checkForUpdates(false);
         PacketEvents.getAPI().load();
         PacketEvents.getAPI().getEventManager().registerListener(new PacketEventListener());
         PacketEvents.getAPI().init();
@@ -66,10 +69,11 @@ public class UniChat {
         Channel.loadChannels();
     }
 
-    public void reload(){
+    @Subscribe
+    public void onProxyReload(@Nonnull ProxyReloadEvent event) {
         Config.reload();
         for(Channel channel : Channel.getChannels().values()){
-            if(channel.getHandler()!= null)
+            if(channel.getHandler() != null)
                 channel.getHandler().destroy();
         }
         Channel.getChannels().clear();
@@ -77,6 +81,7 @@ public class UniChat {
         for(UUID uuid : new HashSet<>(Channel.getPlayerChannels().keySet())){
             Channel.getPlayerChannels().put(uuid, Channel.defaultChannel);
         }
+        logger.info("UniChat reloaded!");
     }
 
     @Subscribe

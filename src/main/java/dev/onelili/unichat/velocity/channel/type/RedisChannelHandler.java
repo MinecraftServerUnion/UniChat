@@ -12,14 +12,9 @@ import dev.onelili.unichat.velocity.util.SimplePlayer;
 import lombok.SneakyThrows;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.jetbrains.annotations.NotNull;
 import redis.clients.jedis.*;
 
 import javax.annotation.Nonnull;
-import java.net.InetSocketAddress;
-import java.time.Duration;
-import java.util.Collection;
-import java.util.List;
 
 public class RedisChannelHandler implements ChannelHandler {
     private final String address;

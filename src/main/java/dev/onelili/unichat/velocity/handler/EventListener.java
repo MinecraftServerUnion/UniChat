@@ -14,6 +14,7 @@ import net.kyori.adventure.text.Component;
 import javax.annotation.Nonnull;
 
 public class EventListener {
+    @SuppressWarnings("deprecation")
     @Subscribe(priority = Short.MIN_VALUE)
     public void onPlayerChat(@Nonnull PlayerChatEvent event) {
         Channel channel;
@@ -67,6 +68,6 @@ public class EventListener {
     @Subscribe
     public void onPlayerLeave(@Nonnull DisconnectEvent event){
         Channel.getPlayerChannels().remove(event.getPlayer().getUniqueId());
-        PlayerData.playerDataMap.remove(event.getPlayer().getUniqueId());
+        PlayerData.getPlayerDataMap().remove(event.getPlayer().getUniqueId());
     }
 }

@@ -2,18 +2,17 @@ channels:
   local:
     name: "&e本地"
     type: LOCAL
-
     # Messages from players in these servers will NOT be sent to the backend
     # but they will directly be handled by this plugin on the proxy level
     force-handle-servers:
       - "server1"
       - "server2"
-    format: "&7[&f%player%&7] &r" # This prefix will only be used if chat is processed on this plugin
+    format: "&f<%player%> &r" # This prefix will only be used if chat is processed on this plugin
     commands:
       - local
       - l
   global:
-    name: "全局"
+    name: "&a全局"
     type: GLOBAL
     format: "&a[全局]&7[&f%player%&7] &r" # This is the prefix of the message sent to the global channel
     commands:
@@ -22,13 +21,13 @@ channels:
     prefixes:
       - "!"
   crossserver:
-    name: "跨服"
+    name: "&b跨服"
     type: REDIS
     format: "&b[跨服]&7[&f%player%&7] &r"
     redis-address: "0.0.0.0"
     redis-port:  6379
-#    redis-user: "admin"
-#    redis-password: "123456"
+#   redis-user: "admin"
+#   redis-password: "123456"
     commands:
       - crossserver
       - cs

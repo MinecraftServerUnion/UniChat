@@ -3,28 +3,29 @@ package dev.onelili.unichat.velocity.module;
 import com.velocitypowered.api.proxy.Player;
 import dev.onelili.unichat.velocity.UniChat;
 import dev.onelili.unichat.velocity.channel.Channel;
-import dev.onelili.unichat.velocity.util.Logger;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
+import javax.annotation.Nonnull;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class PatternModule {
-    public static final Map<String, PatternModule> modules = new HashMap<>();
+    public static final Map<String, PatternModule> modules = new ConcurrentHashMap<>();
 
     public abstract Component handle(Player sender);
 
-    public static void registerDefaults(){
+    public static void registerDefaults() {
         modules.put("item", new ShowItemModule());
         modules.put("i", new ShowItemModule());
     }
 
-    public static Component handleMessage(Player sender, String message) {
+    public static @Nonnull Component handleMessage(@Nonnull Player sender, @Nonnull String message) {
         StringBuilder current = new StringBuilder();
         Component result = Component.empty();
         outerFor: for (int i = 0; i < message.length(); i++) {
             char c = message.charAt(i);
-            if(c=='@'){
+            if(c == '@'){
                 if(Channel.getPlayerChannel(sender) != null) {
                     List<Player> players = new ArrayList<>(UniChat.getProxy().getAllPlayers());
                     players.sort(Comparator.comparingInt((Player p) -> p.getUsername().length()));
@@ -42,11 +43,11 @@ public abstract class PatternModule {
                         continue outerFor;
                     }
                 }
-            }else if(c == '['){
+            } else if(c == '[') {
                 result = result.append(Component.text(current.toString()));
                 current = new StringBuilder();
                 continue;
-            }else if(c == ']'){
+            } else if(c == ']') {
                 String moduleName = current.toString();
                 if(modules.containsKey(moduleName)){
                     result = result.append(modules.get(moduleName).handle(sender));

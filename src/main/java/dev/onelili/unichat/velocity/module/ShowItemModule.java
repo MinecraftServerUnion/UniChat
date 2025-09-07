@@ -4,7 +4,7 @@ import com.velocitypowered.api.proxy.Player;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
-public class ShowItemModule extends PatternModule{
+public class ShowItemModule extends PatternModule {
     @Override
     public Component handle(Player sender) {
         Component component = Component.empty()

@@ -6,17 +6,12 @@ import dev.onelili.unichat.velocity.channel.Channel;
 import dev.onelili.unichat.velocity.channel.ChannelHandler;
 import dev.onelili.unichat.velocity.message.Message;
 import dev.onelili.unichat.velocity.module.PatternModule;
-import dev.onelili.unichat.velocity.util.Logger;
 import dev.onelili.unichat.velocity.util.SimplePlayer;
 import lombok.SneakyThrows;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
-import java.awt.*;
-import java.util.Collection;
-import java.util.List;
 
 public class GlobalChannelHandler implements ChannelHandler {
     private final Channel channel;

@@ -6,13 +6,9 @@ import com.github.retrooper.packetevents.event.SimplePacketListenerAbstract;
 import com.github.retrooper.packetevents.event.simple.PacketPlayReceiveEvent;
 import com.github.retrooper.packetevents.event.simple.PacketPlaySendEvent;
 import com.github.retrooper.packetevents.protocol.chat.message.ChatMessage_v1_16;
-import com.github.retrooper.packetevents.protocol.chat.message.reader.ChatMessageProcessor;
-import com.github.retrooper.packetevents.protocol.player.ClientVersion;
-import com.github.retrooper.packetevents.wrapper.PacketWrapper;
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientHeldItemChange;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerPosition;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerChatMessage;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPlayerPositionAndLook;
-import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSoundEffect;
+import com.github.retrooper.packetevents.wrapper.play.server.*;
 import com.velocitypowered.api.proxy.Player;
 import dev.onelili.unichat.velocity.UniChat;
 import dev.onelili.unichat.velocity.channel.Channel;
@@ -22,10 +18,10 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 
 import javax.annotation.Nonnull;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 
 public class PacketEventListener extends SimplePacketListenerAbstract {
     public PacketEventListener() {
@@ -39,7 +35,7 @@ public class PacketEventListener extends SimplePacketListenerAbstract {
                 WrapperPlayServerChatMessage packet = new WrapperPlayServerChatMessage(event);
                 try {
                     ChatMessage_v1_16 message = (ChatMessage_v1_16) packet.getMessage();
-                    var senderOpt = UniChat.getProxy().getPlayer(message.getSenderUUID());
+                    Optional<Player> senderOpt = UniChat.getProxy().getPlayer(message.getSenderUUID());
                     if (senderOpt.isPresent()) {
                         Player sender = senderOpt.get();
                         String messageText = MiniMessage.miniMessage().serialize(message.getChatContent());
@@ -62,6 +58,24 @@ public class PacketEventListener extends SimplePacketListenerAbstract {
                     UniChat.getLogger().debug("Failed to cast message in chat packet: "+e.getMessage());
                 }
             }
+            case PLAYER_POSITION_AND_LOOK -> {
+                WrapperPlayServerPlayerPositionAndLook wrapper = new WrapperPlayServerPlayerPositionAndLook(event);
+                Player player = event.getPlayer();
+                Objects.requireNonNull(PlayerData.getPlayerDataMap().putIfAbsent(player.getUniqueId(), new PlayerData()))
+                        .setPosition(wrapper.getPosition());
+            }
+            case SET_PLAYER_INVENTORY -> {
+                WrapperPlayServerSetPlayerInventory wrapper = new WrapperPlayServerSetPlayerInventory(event);
+                Player player = event.getPlayer();
+                Objects.requireNonNull(PlayerData.getPlayerDataMap().putIfAbsent(player.getUniqueId(), new PlayerData()))
+                        .getInventory().put(wrapper.getSlot(), wrapper.getStack());
+            }
+            case HELD_ITEM_CHANGE -> {
+                WrapperPlayServerHeldItemChange wrapper = new WrapperPlayServerHeldItemChange(event);
+                Player player = event.getPlayer();
+                Objects.requireNonNull(PlayerData.getPlayerDataMap().putIfAbsent(player.getUniqueId(), new PlayerData()))
+                        .setHandItem(wrapper.getSlot());
+            }
         }
     }
 
@@ -71,30 +85,37 @@ public class PacketEventListener extends SimplePacketListenerAbstract {
             case PLAYER_POSITION -> {
                 WrapperPlayClientPlayerPosition wrapper = new WrapperPlayClientPlayerPosition(event);
                 Player player = event.getPlayer();
-                PlayerData.playerDataMap.computeIfAbsent(player.getUniqueId(), e->new PlayerData())
-                        .position = wrapper.getPosition();
+                Objects.requireNonNull(PlayerData.getPlayerDataMap().putIfAbsent(player.getUniqueId(), new PlayerData()))
+                        .setPosition(wrapper.getPosition());
+            }
+            case HELD_ITEM_CHANGE -> {
+                WrapperPlayClientHeldItemChange wrapper = new WrapperPlayClientHeldItemChange(event);
+                Player player = event.getPlayer();
+                Objects.requireNonNull(PlayerData.getPlayerDataMap().putIfAbsent(player.getUniqueId(), new PlayerData()))
+                        .setHandItem(wrapper.getSlot());
             }
         }
     }
 
-    private void listenTo(ProtocolPacketEvent event){ // to debug
+    private void listenTo(ProtocolPacketEvent event) { // to debug
         try {
-            com.github.retrooper.packetevents.wrapper.PacketWrapper<?> packet=null;
-            for(var i: event.getPacketType().getWrapperClass().getConstructors()){
+            com.github.retrooper.packetevents.wrapper.PacketWrapper<?> packet = null;
+            for(Constructor<?> i : event.getPacketType().getWrapperClass().getConstructors()){
                 if(i.getParameterCount()==1 && i.getParameterTypes()[0].isAssignableFrom(event.getClass())){
                     packet = (com.github.retrooper.packetevents.wrapper.PacketWrapper<?>) i.newInstance(event);
                     break;
                 }
             }
             System.out.println(event.getClass().getSimpleName() + "("+ ((Player)event.getPlayer()).getUsername() +"): "+event.getPacketType());
-            for(Field field : packet.getClass().getDeclaredFields()){
-                field.setAccessible(true);
-                String cont = Objects.toString(field.get(packet));
-                if(cont.length() > 50){
-                    cont = cont.substring(0, 30) + "..." + cont.substring(cont.length() - 20);
+            if(packet != null)
+                for(Field field : packet.getClass().getDeclaredFields()){
+                    field.setAccessible(true);
+                    String cont = Objects.toString(field.get(packet));
+                    if(cont.length() > 50){
+                        cont = cont.substring(0, 30) + "..." + cont.substring(cont.length() - 20);
+                    }
+                    System.out.println("- " + field.getName() + " : " + cont);
                 }
-                System.out.println("- " + field.getName() + " : " + cont);
-            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

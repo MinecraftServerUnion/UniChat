@@ -5,24 +5,26 @@ import com.google.gson.reflect.TypeToken;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
+@SuppressWarnings("unchecked")
 public class MapTree {
     public Map<String, Object> data;
     public MapTree(Map<String, Object> data){
         this.data = data;
     }
     public MapTree(){
-        this.data = new HashMap<>();
+        this.data = new ConcurrentHashMap<>();
     }
 
     public MapTree put(String key, Object val){
         try {
             if (key.contains(".")) {
                 String[] keys = key.split("\\.");
-                if(!data.containsKey(keys[0])) data.put(keys[0], new HashMap<>());
+                if(!data.containsKey(keys[0])) data.put(keys[0], new ConcurrentHashMap<>());
                 Map<String, Object> value = (Map<String, Object>) data.get(keys[0]);
                 for (int i = 1; i < keys.length-1; i++) {
-                    if(!data.containsKey(keys[0])) value.put(keys[0], new HashMap<>());
+                    if(!data.containsKey(keys[0])) value.put(keys[0], new ConcurrentHashMap<>());
                     value = (Map<String, Object>) value.get(keys[0]);
                 }
                 value.put(keys[keys.length-1], val);
@@ -36,7 +38,6 @@ public class MapTree {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public Object get(String key) {
         try {
             if (key.contains(".")) {
@@ -54,13 +55,12 @@ public class MapTree {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public MapTree getSection(String key){
         Object value = get(key);
         if(value instanceof Map){
             return new MapTree((Map<String, Object>) value);
         }
-        return new MapTree(new HashMap<>());
+        return new MapTree(new ConcurrentHashMap<>());
     }
 
     public boolean getBoolean(String key, boolean defaultValue){
