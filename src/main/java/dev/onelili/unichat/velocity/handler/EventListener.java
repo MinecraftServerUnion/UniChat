@@ -11,6 +11,8 @@ import dev.onelili.unichat.velocity.command.DirectMessageCommand;
 import dev.onelili.unichat.velocity.message.Message;
 import dev.onelili.unichat.velocity.module.PatternModule;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import javax.annotation.Nonnull;
 
@@ -29,10 +31,15 @@ public class EventListener {
         }
         if (channel == null) return;
         if (channel.getHandler() == null) {
+            Component msg = PatternModule.handleMessage(event.getPlayer(), message, true);
             Component component = new Message(channel.getChannelConfig().getString("format"))
                     .add("player", event.getPlayer().getUsername())
                     .add("channel", channel.getDisplayName())
-                    .toComponent().append(PatternModule.handleMessage(event.getPlayer(), message, true));
+                    .toComponent().append(msg);
+            ChatHistoryManager.recordMessage(event.getPlayer().getUsername(),
+                    channel.getId(),
+                    event.getPlayer().getCurrentServer().isPresent()?event.getPlayer().getCurrentServer().get().getServerInfo().getName():null,
+                    LegacyComponentSerializer.legacyAmpersand().serialize(msg));
             UniChat.getProxy().getScheduler()
                     .buildTask(UniChat.getInstance(),
                             () -> {

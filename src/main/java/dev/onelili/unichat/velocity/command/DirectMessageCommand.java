@@ -5,11 +5,14 @@ import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import dev.onelili.unichat.velocity.UniChat;
 import dev.onelili.unichat.velocity.channel.Channel;
+import dev.onelili.unichat.velocity.handler.ChatHistoryManager;
 import dev.onelili.unichat.velocity.message.Message;
 import dev.onelili.unichat.velocity.module.PatternModule;
 import dev.onelili.unichat.velocity.util.Config;
 import dev.onelili.unichat.velocity.util.ShitMountainException;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,6 +68,8 @@ public class DirectMessageCommand implements SimpleCommand {
         target.sendMessage(inbound);
         sender.sendMessage(outbound);
         lastMessage.put(target.getUniqueId(), sender.getUniqueId());
+
+        ChatHistoryManager.recordMessage(sender.getUsername(), "msg", target.getUsername(), LegacyComponentSerializer.legacyAmpersand().serialize(msg));
     }
     public List<String> suggest(Invocation invocation) {
         if(!(invocation.source() instanceof Player)) return List.of();

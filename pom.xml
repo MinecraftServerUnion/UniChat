@@ -85,7 +85,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <minimizeJar>true</minimizeJar>
+<!--                            <minimizeJar>true</minimizeJar>-->
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <relocations>
                                 <relocation>
@@ -96,6 +96,10 @@
                                     <pattern>com.github.retrooper.packetevents</pattern>
                                     <shadedPattern>dev.onelili.unichat.lib.packetevents</shadedPattern>
                                 </relocation>
+<!--                                <relocation>-->
+<!--                                    <pattern>com.zaxxer.hikari</pattern>-->
+<!--                                    <shadedPattern>dev.onelili.unichat.lib.hikari</shadedPattern>-->
+<!--                                </relocation>-->
                             </relocations>
                         </configuration>
                     </execution>
@@ -149,6 +153,18 @@
             <artifactId>miniplaceholders-api</artifactId>
             <version>3.0.1</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>5.1.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.50.3.0</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 </project>

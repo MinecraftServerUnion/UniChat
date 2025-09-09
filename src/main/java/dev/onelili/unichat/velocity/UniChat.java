@@ -13,6 +13,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import dev.onelili.unichat.velocity.channel.Channel;
 import dev.onelili.unichat.velocity.command.DirectMessageCommand;
 import dev.onelili.unichat.velocity.command.UniChatCommand;
+import dev.onelili.unichat.velocity.handler.ChatHistoryManager;
 import dev.onelili.unichat.velocity.handler.EventListener;
 import dev.onelili.unichat.velocity.handler.PacketEventListener;
 import dev.onelili.unichat.velocity.message.MessageLoader;
@@ -74,11 +75,15 @@ public class UniChat {
         DirectMessageCommand.registerCommand();
 
         getProxy().getCommandManager().register(getProxy().getCommandManager().metaBuilder("unichat").build(), new UniChatCommand());
+
+        ChatHistoryManager.init();
     }
 
     public static void reload() {
         Config.reload();
         MessageLoader.initialize();
+        ChatHistoryManager.dataSource.close();
+        ChatHistoryManager.init();
         for(CommandMeta commandMetas: Channel.getRegisteredChannelCommands()){
             getProxy().getCommandManager().unregister(commandMetas);
         }

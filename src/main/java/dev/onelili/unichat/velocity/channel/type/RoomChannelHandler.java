@@ -3,11 +3,14 @@ package dev.onelili.unichat.velocity.channel.type;
 import com.velocitypowered.api.proxy.Player;
 import dev.onelili.unichat.velocity.channel.Channel;
 import dev.onelili.unichat.velocity.channel.ChannelHandler;
+import dev.onelili.unichat.velocity.handler.ChatHistoryManager;
 import dev.onelili.unichat.velocity.message.Message;
 import dev.onelili.unichat.velocity.module.PatternModule;
 import dev.onelili.unichat.velocity.util.ShitMountainException;
 import dev.onelili.unichat.velocity.util.SimplePlayer;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
@@ -28,9 +31,17 @@ public class RoomChannelHandler implements ChannelHandler {
     public void handle(@NotNull SimplePlayer player, @NotNull String message) {
         if(!rooms.containsKey(player))
             throw new ShitMountainException("Player "+player.getName()+" is not in a room but somehow called room channel!");
-        Component component = new Message(channel.getChannelConfig().getString("format"))
+        Component msg = PatternModule.handleMessage(player.player, message, true),
+                component = new Message(channel.getChannelConfig().getString("format"))
                 .add("player", player.getName())
-                .add("room_code", rooms.get(player)).toComponent().append(PatternModule.handleMessage(player.player, message, true));
+                .add("room_code", rooms.get(player)).toComponent()
+                .append(msg);
+
+        ChatHistoryManager.recordMessage(player.getName(),
+                channel.getId(),
+                rooms.get(player),
+                LegacyComponentSerializer.legacyAmpersand().serialize(msg));
+
         for(SimplePlayer p : getPlayersInRoom(rooms.get(player))){
             p.player.sendMessage(component);
         }

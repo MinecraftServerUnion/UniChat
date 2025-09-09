@@ -4,14 +4,17 @@ import com.velocitypowered.api.proxy.Player;
 import dev.onelili.unichat.velocity.UniChat;
 import dev.onelili.unichat.velocity.channel.Channel;
 import dev.onelili.unichat.velocity.channel.ChannelHandler;
+import dev.onelili.unichat.velocity.handler.ChatHistoryManager;
 import dev.onelili.unichat.velocity.message.Message;
 import dev.onelili.unichat.velocity.module.PatternModule;
+import dev.onelili.unichat.velocity.util.Config;
 import dev.onelili.unichat.velocity.util.Logger;
 import dev.onelili.unichat.velocity.util.MapTree;
 import dev.onelili.unichat.velocity.util.SimplePlayer;
 import lombok.SneakyThrows;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import redis.clients.jedis.*;
 
 import javax.annotation.Nonnull;
@@ -46,7 +49,14 @@ public class RedisChannelHandler implements ChannelHandler {
                     String sender = cont.getString("sender");
                     Message msg = new Message(channel.getChannelConfig().getString("format"));
                     msg.add("player", sender);
+                    msg.add("server", cont.getString("server"));
                     msg.add("channel", channel.getDisplayName());
+
+                    ChatHistoryManager.recordMessage(sender,
+                            channel.getId(),
+                            cont.getString("server"),
+                            LegacyComponentSerializer.legacyAmpersand().serialize(message));
+
                     Component component = msg.toComponent().append(message);
                     for (Player receiver : UniChat.getProxy().getAllPlayers()) {
                         receiver.sendMessage(component);
@@ -76,7 +86,8 @@ public class RedisChannelHandler implements ChannelHandler {
         msg.add("channel", channel.getDisplayName());
         MapTree cont =  new MapTree()
                 .put("msg", MiniMessage.miniMessage().serialize(PatternModule.handleMessage(player.player, message, true)))
-                .put("sender", player.getName());
+                .put("sender", player.getName())
+                .put("server", Config.getString("server-name"));
         jedis.publish("unichat-channel-" + channel.getId(), cont.toJson());
     }
 }

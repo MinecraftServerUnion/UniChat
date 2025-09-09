@@ -1,3 +1,6 @@
+
+server-name: "Velocity"
+
 channels:
   # These are the channels that players can join and chat in
   # The first one listed is the default channel when a player joins the server
@@ -28,7 +31,7 @@ channels:
   crossserver:
     name: "世界"
     type: REDIS
-    format: "<#47fbeb>[世界] &8[&f%player%&8]&f "
+    format: "<#47fbeb>[世界] %server% &8[&f%player%&8]&f "
     redis-address: "0.0.0.0"
     redis-port:  6379
 #   redis-user: "admin"
