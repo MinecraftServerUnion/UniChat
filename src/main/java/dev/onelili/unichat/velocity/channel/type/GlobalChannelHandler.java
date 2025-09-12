@@ -38,6 +38,8 @@ public class GlobalChannelHandler implements ChannelHandler {
                 LegacyComponentSerializer.legacyAmpersand().serialize(cmp));
 
         for(Player receiver : UniChat.getProxy().getAllPlayers()) {
+            if(channel.getReceivePermission() != null&&!receiver.hasPermission(channel.getReceivePermission()))
+                continue;
             receiver.sendMessage(component);
         }
         if(channel.isLogToConsole())

@@ -14,6 +14,7 @@ import dev.onelili.unichat.velocity.UniChat;
 import dev.onelili.unichat.velocity.channel.Channel;
 import dev.onelili.unichat.velocity.message.Message;
 import dev.onelili.unichat.velocity.module.PatternModule;
+import dev.onelili.unichat.velocity.util.Config;
 import dev.onelili.unichat.velocity.util.Logger;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -39,19 +40,17 @@ public class PacketEventListener extends SimplePacketListenerAbstract {
                     Optional<Player> senderOpt = UniChat.getProxy().getPlayer(message.getSenderUUID());
                     if (senderOpt.isPresent()) {
                         Player sender = senderOpt.get();
-                        String messageText = MiniMessage.miniMessage().serialize(message.getChatContent());
                         if(sender.getCurrentServer().isPresent()){
                             String serverid = sender.getCurrentServer().get().getServerInfo().getName();
                             Channel channel = Channel.getPlayerChannel(sender);
-                            if(channel == null || channel.getHandler() != null) return;
-                            if(channel.getChannelConfig().getStringList("force-handle-servers").contains(serverid)) return;
-
-//                            Component component = new Message(channel.getChannelConfig().getString("format"))
-//                                    .add("player", sender.getUsername())
-//                                    .add("channel", channel.getDisplayName())
-//                                    .toComponent().append(PatternModule.handleMessage(event.getPlayer(), messageText, true));
-//                            Player receiver = event.getPlayer();
-//                            receiver.sendMessage(component);
+                            String chatMessage = MiniMessage.miniMessage().serialize(message.getChatContent());
+                            if(channel == null || !channel.isPassthrough() || Config.getConfigTree().getStringList("unhandled-servers").contains(serverid)) return;
+                            if(channel.getChannelConfig().getBoolean("respect-backend", true)&&sender.equals(event.getPlayer())){
+                                UniChat.getProxy().getScheduler()
+                                        .buildTask(UniChat.getInstance(),
+                                                () -> Channel.handleChat(event.getPlayer(), channel, chatMessage))
+                                        .schedule();
+                            }
                             event.setCancelled(true);
                         }
                     }

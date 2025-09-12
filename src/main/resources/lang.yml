@@ -1,22 +1,37 @@
 command:
-  cannot-execute-from-console: "&c该命令必须由玩家执行!"
-  joined-channel: "&a成功加入 %channel% &a频道"
-  invalid-arguments: "&c无效的参数!"
+  cannot-execute-from-console: "<#CC1613>错误: <#F85654>该命令必须由玩家执行!"
+  joined-channel: "<#47BFFB>成功加入 <#35CEE9><b>%channel%</b> <#47BFFB>频道"
+  invalid-arguments: "<#CC1613>错误: <#F85654>无效的参数!"
 
   msg-usage: "&c用法: /msg <player> <message>"
   reply-usage: "&c用法: /reply <message>"
-  player-not-found: "&c玩家&b %player%&c 不存在!"
-  msg-self: "&c不能向自己发送消息!"
-  reply-no-last-message: "&c无可回复的消息!"
+  player-not-found: "<#CC1613>错误: <#F85654>玩家 %player% 不存在!"
+  msg-self: "<#CC1613>错误: <#F85654>不能向自己发送消息!"
+  reply-no-last-message: "<#CC1613>错误: <#F85654>无可回复的消息!"
 
-  not-in-room: "&c你不在任何房间中! 请先使用/room create创建房间!"
-  joined-room: "&a成功加入房间 &b%room_code%&a! &a其他玩家可以使用&7 /room %room_code% &a加入房间"
-  room-not-found: "&c该房间不存在!"
-  invited-others: "&a成功邀请&b %player%&a 加入聊天房间!"
-  invited-to-room: "&a你已被邀请加入聊天房间 &b%room_code%&a! &a&l<click:run_command:'/room %room_code%'>[点击加入]</click>"
+  invalid-timestamp: "<#CC1613>错误: <#F85654>无效的时间戳!"
+
+  not-in-room: "<#CC1613>错误: <#F85654>你不在任何房间中! 请先使用/room create创建房间!"
+  joined-room: "<#47BFFB>成功加入房间 <#35CEE9><b>#%room_code%</b><#47BFFB>! <click:suggest_command:'/room invite '>其他玩家可以使用&7 /room %room_code% <#47BFFB>加入房间</click>"
+  room-not-found: "<#CC1613>错误: <#F85654>该房间不存在!"
+  invited-others: "<#47BFFB>成功邀请<#35CEE9> %player%<#47BFFB> 加入聊天房间!"
+  invited-to-room: "<#47BFFB>你已被邀请加入聊天房间 <#35CEE9>#%room_code%<#47BFFB>! &a&l<click:run_command:'/room %room_code%'>[点击加入]</click>"
+
+  channel-not-found: "<#CC1613>错误: <#F85654>该频道不存在!"
+
+  chat-history:
+    channel-header: "&7====== <#47BFFB>聊天记录 - 频道列表 &7======"
+    channel-item: "&7- <#47BFFB><click:run_command:'/chathistory %channel_id%'>%channel_name%</click>"
+    chat-header: "&7====== <#47BFFB>聊天记录 - %channel_name% &7==== <click:suggest_command:'/chathistory search %channel_id% 1 '><#47BFFB>[🔍]</click>"
+    chat-item: "&7<hover:show_text:'&7%date% @%server%'>%time%</hover> &f%sender%&7: &f%message%"
+    chat-footer: "<click:run_command:'/chathistory %channel_id% before %timestamp_prev%'><#47BFFB>[<] 上一页</click> &7| <click:run_command:'/chathistory %channel_id% after %timestamp_next%'><#47BFFB>下一页 [>]</click>"
+    chat-search-footer: "<click:run_command:'/chathistory search %channel_id% %page_prev% %keyword%'><#47BFFB>[<] 上一页</click> &7| <click:run_command:'/chathistory search %channel_id% %page_next% %keyword%'><#47BFFB>下一页 [>]</click>"
+    empty: "<#CC1613>错误: <#F85654>该频道暂无聊天记录!"
 
 mention:
   bossbar-title: "&e&l%sender% 提到了你!"
 
 chat:
-  channel-declined: "&c在此服务器无法通过该频道发送消息! &e&l<click:run_command:'/l'>[切换至本地频道]</click>"
+  channel-declined: "<#CC1613>错误: <#F85654>在此服务器无法通过该频道发送消息! &e&l<click:run_command:'/l'>[切换频道]</click>"
+  no-send-permission: "<#CC1613>错误: <#F85654>你没有在该频道发送消息的权限! &e&l<click:run_command:'/l'>[切换频道]</click>"
+  cannot-command-send-passthrough: "<#CC1613>错误: <#F85654>该频道不允许通过命令发送消息!"

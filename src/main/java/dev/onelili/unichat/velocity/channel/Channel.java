@@ -43,7 +43,7 @@ public class Channel {
     }
 
     static {
-        registerChannelType("local", channel -> null);
+        registerChannelType("local", LocalChannelHandler::new);
         registerChannelType("global", GlobalChannelHandler::new);
         registerChannelType("redis", RedisChannelHandler::new);
         registerChannelType("room", RoomChannelHandler::new);
@@ -51,8 +51,8 @@ public class Channel {
 
     private String id;
     private String displayName;
+    private boolean passthrough;
     @Builder.Default
-    @Nullable
     private ChannelHandler handler = null;
     @Builder.Default
     private boolean logToConsole = true;
@@ -92,6 +92,7 @@ public class Channel {
                         .logToConsole(Config.getConfigTree().getBoolean("channels." + i + ".log-console", true))
                         .receivePermission(Config.getConfigTree().getString("channels." + i + ".receive-permission", null))
                         .sendPermission(Config.getConfigTree().getString("channels." + i + ".send-permission", null))
+                        .passthrough(Config.getConfigTree().getBoolean("channels." + i + ".passthrough", false))
                         .build();
                 channel.handler = channelTypes.get(Config.getString("channels." + i + ".type").toLowerCase(Locale.ROOT)).apply(channel);
                 if(Config.contains("channels." + i + ".restricted-servers")) {
@@ -106,70 +107,8 @@ public class Channel {
                         .metaBuilder(commands.getFirst())
                                 .aliases(commands.subList(1, commands.size()).toArray(String[]::new))
                                 .build();
-                if(Config.getString("channels." + i + ".type").toLowerCase(Locale.ROOT).equals("room")){
-                    registeredChannelCommands.add(meta);
-                    UniChat.getProxy().getCommandManager().register(meta, new SimpleCommand(){
-                        @Override
-                        public void execute(Invocation invocation) {
-                            if (!(invocation.source() instanceof Player pl)) {
-                                invocation.source().sendMessage(Message.getMessage("command.cannot-execute-from-console").toComponent());
-                                return;
-                            }
-                            if (invocation.arguments().length == 0 || invocation.arguments()[0].equals("create")) {
-                                String roomCode = "" + new Random().nextInt(1000, 9999);
-                                pl.sendMessage(Message.getMessage("command.joined-room").add("room_code", roomCode).toComponent());
-                                playerChannels.put(pl.getUniqueId(), channel);
-                                RoomChannelHandler.joinRoom(pl, roomCode);
-                            } else {
-                                if (invocation.arguments()[0].equals("invite")){
-                                    if(!RoomChannelHandler.rooms.containsKey(new SimplePlayer(pl))){
-                                        pl.sendMessage(Message.getMessage("command.not-in-room").toComponent());
-                                    }else if(invocation.arguments().length >= 2){
-                                        if(UniChat.getProxy().getPlayer(invocation.arguments()[1]).isPresent()){
-                                            Player target = UniChat.getProxy().getPlayer(invocation.arguments()[1]).get();
-                                            pl.sendMessage(Message.getMessage("command.invited-others").add("player", target.getUsername()).toComponent());
-                                            target.sendMessage(Message.getMessage("command.invited-to-room").add("player", pl.getUsername()).add("room_code", RoomChannelHandler.rooms.get(new SimplePlayer(pl))).toComponent());
-                                        }
-                                    }else{
-                                        pl.sendMessage(Message.getMessage("command.invalid-arguments").toComponent());
-                                    }
-                                }else if (RoomChannelHandler.rooms.containsValue(invocation.arguments()[0])) {
-                                    playerChannels.put(pl.getUniqueId(), channel);
-                                    RoomChannelHandler.joinRoom(pl, invocation.arguments()[0]);
-                                    pl.sendMessage(Message.getMessage("command.joined-room").add("room_code", invocation.arguments()[0]).toComponent());
-                                } else {
-                                    pl.sendMessage(Message.getMessage("command.room-not-found").toComponent());
-                                }
-                            }
-                        }
-                        @Override
-                        public List<String> suggest(Invocation invocation) {
-                            if (!(invocation.source() instanceof Player)) {
-                                return new ArrayList<>();
-                            }
-                            if(invocation.arguments().length == 1) return List.of("invite", "create");
-                            if(invocation.arguments().length == 2 && invocation.arguments()[0].equals("invite")){
-                                return UniChat.getProxy().getAllPlayers().stream().map(Player::getUsername).toList();
-                            }
-                            return new ArrayList<>();
-                        }
-                    });
-                }else {
-                    registeredChannelCommands.add(meta);
-                    UniChat.getProxy().getCommandManager().register(meta, (SimpleCommand) invocation -> {
-                        if (!(invocation.source() instanceof Player pl)) {
-                            invocation.source().sendMessage(Message.getMessage("command.cannot-execute-from-console").toComponent());
-                            return;
-                        }
-                        if (invocation.arguments().length == 0) {
-                            pl.sendMessage(Message.getMessage("command.joined-channel").add("channel", channel.getDisplayName()).toComponent());
-                            playerChannels.put(pl.getUniqueId(), channel);
-                            RoomChannelHandler.leaveRoom(pl);
-                        } else {
-                            handleChat(pl, channel, String.join(" ", invocation.arguments()));
-                        }
-                    });
-                }
+                registeredChannelCommands.add(meta);
+                UniChat.getProxy().getCommandManager().register(meta, channel.handler.getCommand(channel));
                 if(defaultChannel == null) defaultChannel = channel;
             } catch (Exception e) {
                 Logger.error("Failed to load channel " + i);
@@ -179,7 +118,6 @@ public class Channel {
         }
     }
     public static void handleChat(Player player, Channel channel, String message){
-        if(channel.getHandler() == null) return;
         channel.getHandler().handle(new SimplePlayer(player), message);
     }
 }

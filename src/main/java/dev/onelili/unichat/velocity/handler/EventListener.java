@@ -10,6 +10,8 @@ import dev.onelili.unichat.velocity.channel.Channel;
 import dev.onelili.unichat.velocity.command.DirectMessageCommand;
 import dev.onelili.unichat.velocity.message.Message;
 import dev.onelili.unichat.velocity.module.PatternModule;
+import dev.onelili.unichat.velocity.util.Config;
+import dev.onelili.unichat.velocity.util.SimplePlayer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -30,36 +32,10 @@ public class EventListener {
             message = event.getMessage();
         }
         if (channel == null) return;
-        if (channel.getHandler() == null) {
-            Component msg = PatternModule.handleMessage(event.getPlayer(), message, true);
-            Component component = new Message(channel.getChannelConfig().getString("format"))
-                    .add("player", event.getPlayer().getUsername())
-                    .add("channel", channel.getDisplayName())
-                    .toComponent().append(msg);
-            ChatHistoryManager.recordMessage(event.getPlayer().getUsername(),
-                    channel.getId(),
-                    event.getPlayer().getCurrentServer().isPresent()?event.getPlayer().getCurrentServer().get().getServerInfo().getName():null,
-                    LegacyComponentSerializer.legacyAmpersand().serialize(msg));
-            UniChat.getProxy().getScheduler()
-                    .buildTask(UniChat.getInstance(),
-                            () -> {
-                                if (channel.isLogToConsole())
-                                    UniChat.getProxy().getConsoleCommandSource().sendMessage(component);
-                                if (event.getPlayer().getCurrentServer().isPresent()) {
-                                    for (Player player : event.getPlayer().getCurrentServer().get().getServer().getPlayersConnected()) {
-                                        player.sendMessage(component);
-                                    }
-                                }
-                            })
-                    .schedule();
-            if (event.getPlayer().getCurrentServer().isPresent()) {
-                String serverid = event.getPlayer().getCurrentServer().get().getServerInfo().getName();
-                if (channel.getChannelConfig().getStringList("force-handle-servers").contains(serverid)) {
-                    event.setResult(PlayerChatEvent.ChatResult.denied());
-                    return;
-                }
+        if (event.getPlayer().getCurrentServer().isPresent()) {
+            if (channel.isPassthrough() && Config.getConfigTree().getStringList("unhandled-servers").contains(event.getPlayer().getCurrentServer().get().getServerInfo().getName())){
+                return;
             }
-            return;
         }
         if(event.getPlayer().getCurrentServer().isPresent()){
             String serverid = event.getPlayer().getCurrentServer().get().getServerInfo().getName();
@@ -69,7 +45,13 @@ public class EventListener {
                 return;
             }
         }
-        event.setResult(PlayerChatEvent.ChatResult.denied());
+        if(channel.getSendPermission()!=null&&!event.getPlayer().hasPermission(channel.getSendPermission())){
+            event.getPlayer().sendMessage(Message.getMessage("chat.no-send-permission").toComponent());
+            event.setResult(PlayerChatEvent.ChatResult.denied());
+            return;
+        }
+        if (!channel.isPassthrough()) event.setResult(PlayerChatEvent.ChatResult.denied());
+        else if(channel.getChannelConfig().getBoolean("respect-backend", true)) return;
         UniChat.getProxy().getScheduler()
                 .buildTask(UniChat.getInstance(),
                         () -> Channel.handleChat(event.getPlayer(), channel, message))

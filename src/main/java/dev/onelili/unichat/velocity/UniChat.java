@@ -11,6 +11,7 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import dev.onelili.unichat.velocity.channel.Channel;
+import dev.onelili.unichat.velocity.command.ChatHistoryCommand;
 import dev.onelili.unichat.velocity.command.DirectMessageCommand;
 import dev.onelili.unichat.velocity.command.UniChatCommand;
 import dev.onelili.unichat.velocity.handler.ChatHistoryManager;
@@ -75,8 +76,14 @@ public class UniChat {
         DirectMessageCommand.registerCommand();
 
         getProxy().getCommandManager().register(getProxy().getCommandManager().metaBuilder("unichat").build(), new UniChatCommand());
+        getProxy().getCommandManager().register(getProxy().getCommandManager().metaBuilder("chathistory").aliases("chathist", "ch").build(), new ChatHistoryCommand());
 
         ChatHistoryManager.init();
+
+        // For Luckperms to load the nodes
+        getProxy().getConsoleCommandSource().hasPermission("unichat.chathistory");
+        getProxy().getConsoleCommandSource().hasPermission("unichat.admin");
+        getProxy().getConsoleCommandSource().hasPermission("unichat.channel");
     }
 
     public static void reload() {
@@ -88,8 +95,7 @@ public class UniChat {
             getProxy().getCommandManager().unregister(commandMetas);
         }
         for(Channel channel : Channel.getChannels().values()){
-            if(channel.getHandler() != null)
-                channel.getHandler().destroy();
+            channel.getHandler().destroy();
         }
         Channel.getChannels().clear();
         Channel.loadChannels();

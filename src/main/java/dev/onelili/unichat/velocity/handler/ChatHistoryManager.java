@@ -48,10 +48,27 @@ public class ChatHistoryManager {
         }
     }
     @SneakyThrows
-    public static List<ChatMessage> searchHistory(String query, @Nullable String channel, int limit){
+    public static List<ChatMessage> searchHistory(String query, @Nullable String channel, int limit, int offset){
         try (Connection connection = getConnection()) {
-            PreparedStatement st = connection.prepareStatement("SELECT * FROM chathistory WHERE message LIKE '%' || ? || '%'"+(channel!= null ? " AND channel = "+channel : "")+" ORDER BY time DESC LIMIT ?");
+            String tmp="SELECT * FROM chathistory WHERE message LIKE '%' || ? || '%'"+(channel!= null ? " AND channel = '"+channel+"'" : "")+" ORDER BY time DESC LIMIT ? OFFSET ?";
+            System.out.println(tmp.replaceFirst("\\?", "'"+query+"'").replaceFirst("\\?", String.valueOf(limit)).replaceFirst("\\?", String.valueOf(offset)));
+            PreparedStatement st = connection.prepareStatement("SELECT * FROM chathistory WHERE message LIKE '%' || ? || '%'"+(channel!= null ? " AND channel = '"+channel+"'" : "")+" ORDER BY time DESC LIMIT ? OFFSET ?");
             st.setString(1, query);
+            st.setInt(2, limit);
+            st.setInt(3, offset);
+            ResultSet rs = st.executeQuery();
+            List<ChatMessage> result = new ArrayList<>();
+            while (rs.next()) {
+                result.add(new ChatMessage(rs.getString("sender"), rs.getString("channel"), rs.getString("server"), rs.getString("message"), rs.getLong("time")));
+            }
+            return result;
+        }
+    }
+    @SneakyThrows
+    public static List<ChatMessage> listHistoryBefore(long startTime, int limit, @Nullable String channel){
+        try (Connection connection = getConnection()) {
+            PreparedStatement st = connection.prepareStatement("SELECT * FROM chathistory WHERE time <= ?"+(channel!= null ? " AND channel = '"+channel+"'" : "")+" ORDER BY time DESC LIMIT ?");
+            st.setLong(1, startTime);
             st.setInt(2, limit);
             ResultSet rs = st.executeQuery();
             List<ChatMessage> result = new ArrayList<>();
@@ -62,9 +79,9 @@ public class ChatHistoryManager {
         }
     }
     @SneakyThrows
-    public static List<ChatMessage> listHistory(long startTime, int limit){
+    public static List<ChatMessage> listHistoryAfter(long startTime, int limit, @Nullable String channel){
         try (Connection connection = getConnection()) {
-            PreparedStatement st = connection.prepareStatement("SELECT * FROM chathistory WHERE time <= ? ORDER BY time DESC DESC LIMIT ?");
+            PreparedStatement st = connection.prepareStatement("SELECT * FROM chathistory WHERE time >= ?"+(channel!= null ? " AND channel = '"+channel+"'" : "")+" ORDER BY time LIMIT ?");
             st.setLong(1, startTime);
             st.setInt(2, limit);
             ResultSet rs = st.executeQuery();
