@@ -45,11 +45,13 @@ public class EventListener {
                 return;
             }
         }
-        if (!channel.isPassthrough()) event.setResult(PlayerChatEvent.ChatResult.denied());
         if(channel.getSendPermission()!=null&&!event.getPlayer().hasPermission(channel.getSendPermission())){
             event.getPlayer().sendMessage(Message.getMessage("chat.no-send-permission").toComponent());
+            event.setResult(PlayerChatEvent.ChatResult.denied());
             return;
         }
+        if (!channel.isPassthrough()) event.setResult(PlayerChatEvent.ChatResult.denied());
+        else if(channel.getChannelConfig().getBoolean("respect-backend", true)) return;
         UniChat.getProxy().getScheduler()
                 .buildTask(UniChat.getInstance(),
                         () -> Channel.handleChat(event.getPlayer(), channel, message))

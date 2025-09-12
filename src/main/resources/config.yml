@@ -14,6 +14,7 @@ channels:
     name: "本地"
     type: LOCAL
     passthrough: true
+    respect-backend: true # 若为true, 消息将会仅在后端服务器返回该聊天消息时被显示。适用于对聊天事件有所修改的服务器等。
     format: "&f<click:suggest_command:'@%player%'><%player%></click> &r"
     commands:
       - local
@@ -39,17 +40,18 @@ channels:
       - staff
     receive-permission: "unichat.channel.staff"
     send-permission: "unichat.channel.staff"
-  crossserver:
-    name: "世界"
-    type: REDIS
-    format: "<#47fbeb>[世界] %server% &8[&f%player%&8]&f "
-    redis-address: "0.0.0.0"
-    redis-port:  6379
-#   redis-user: "admin"
-#   redis-password: "123456"
-    commands:
-      - crossserver
-      - cs
+
+#  crossserver:
+#    name: "世界"
+#    type: REDIS
+#    format: "<#47fbeb>[世界] %server% &8[&f%player%&8]&f "
+#    redis-address: "0.0.0.0"
+#    redis-port:  6379
+##   redis-user: "admin"
+##   redis-password: "123456"
+#    commands:
+#      - crossserver
+#      - cs
 
   # 注意：ROOM类型频道比较特殊：配置中应最多有一个频道被标为ROOM!
   # 玩家可以使用 /room 以切换至本频道并发送消息给同处于同一房间的玩家

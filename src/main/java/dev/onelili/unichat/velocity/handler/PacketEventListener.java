@@ -43,7 +43,14 @@ public class PacketEventListener extends SimplePacketListenerAbstract {
                         if(sender.getCurrentServer().isPresent()){
                             String serverid = sender.getCurrentServer().get().getServerInfo().getName();
                             Channel channel = Channel.getPlayerChannel(sender);
+                            String chatMessage = MiniMessage.miniMessage().serialize(message.getChatContent());
                             if(channel == null || !channel.isPassthrough() || Config.getConfigTree().getStringList("unhandled-servers").contains(serverid)) return;
+                            if(channel.getChannelConfig().getBoolean("respect-backend", true)&&sender.equals(event.getPlayer())){
+                                UniChat.getProxy().getScheduler()
+                                        .buildTask(UniChat.getInstance(),
+                                                () -> Channel.handleChat(event.getPlayer(), channel, chatMessage))
+                                        .schedule();
+                            }
                             event.setCancelled(true);
                         }
                     }
@@ -86,9 +93,6 @@ public class PacketEventListener extends SimplePacketListenerAbstract {
                 Player player = event.getPlayer();
                 Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()))
                         .setHandItem(wrapper.getSlot());
-            }
-            case CHAT_MESSAGE -> {
-                listenTo(event);
             }
         }
     }
