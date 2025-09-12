@@ -1,33 +1,44 @@
-
+# 在cross-server频道中显示的本服务器群组名称
 server-name: "Velocity"
 
+# 以下服务器中的玩家在启用"passthrough"选项时，本插件不会处理其聊天消息!
+# 适用于若某子服使用了独立的聊天插件
+unhandled-servers:
+  - "server1"
+  - "server2"
+
+# 以下为服务器频道配置，您可以随意添加/删除频道
+# 以下列出的第一个频道将被设为玩家进服默认频道
 channels:
-  # These are the channels that players can join and chat in
-  # The first one listed is the default channel when a player joins the server
   local:
     name: "本地"
     type: LOCAL
-    # Messages from players in these servers will NOT be sent to the backend
-    # but they will directly be handled by this plugin on the proxy level
-    force-handle-servers:
-      - "server1"
-      - "server2"
-    format: "&f<%player%> &r" # This prefix will only be used if chat is processed on this plugin
+    passthrough: true
+    format: "&f<click:suggest_command:'@%player%'><%player%></click> &r"
     commands:
       - local
       - l
   global:
     name: "跨服"
     type: GLOBAL
-    format: "<#47BFFB>[跨服] &8[&f%player%&8]&f " # This is the prefix of the message sent to the global channel
-    # Player is not allowed in this channel when in these servers (any chat message will be blocked!)
+    format: "<#47BFFB>[跨服] <click:suggest_command:'@%player%'>&8[&f%player%&8]</click>&r "
+    # 玩家在以下列出的服务器中将无法在本频道中发送消息
     restricted-servers:
       - "server1"
     commands:
       - global
       - g
+    # 若玩家发送的消息开头为以下列出内容，将会自动去除该开头并将该消息发送至本频道，忽略玩家当前实际所在频道
     prefixes:
       - "!"
+  staff:
+    name: "管理"
+    type: GLOBAL
+    format: "<#FFA500>[管理] <click:suggest_command:'@%player%'>&8[&f%player%&8]</click>&r "
+    commands:
+      - staff
+    receive-permission: "unichat.channel.staff"
+    send-permission: "unichat.channel.staff"
   crossserver:
     name: "世界"
     type: REDIS
@@ -40,8 +51,8 @@ channels:
       - crossserver
       - cs
 
-  # Note that type ROOM is a bit special: only one channel can be specified as the ROOM channel!
-  # Players can use the /room command to switch to the ROOM channel and chat with others with the same room code
+  # 注意：ROOM类型频道比较特殊：配置中应最多有一个频道被标为ROOM!
+  # 玩家可以使用 /room 以切换至本频道并发送消息给同处于同一房间的玩家
   room:
     name: "房间"
     type: ROOM
@@ -58,9 +69,12 @@ message: # /msg
     - reply
     - r
 
+chat-history:
+  message-per-page: 10
+
 module:
   mention:
-    bossbar-progress-decrease: 0.05 # 0-1, usually 0.05 is fine
+    bossbar-progress-decrease: 0.05 # 0-1, 一般 0.05 即可
     sound-effect-id: "minecraft:entity.experience_orb.pickup"
     sound-effect-volume: 1 # 0-1
     sound-effect-pitch: 1 # 0.5-2
