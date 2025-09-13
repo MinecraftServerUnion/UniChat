@@ -15,6 +15,7 @@ import dev.onelili.unichat.velocity.channel.Channel;
 import dev.onelili.unichat.velocity.message.Message;
 import dev.onelili.unichat.velocity.module.PatternModule;
 import dev.onelili.unichat.velocity.util.Config;
+import dev.onelili.unichat.velocity.util.ItemUtils;
 import dev.onelili.unichat.velocity.util.Logger;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -74,7 +75,7 @@ public class PacketEventListener extends SimplePacketListenerAbstract {
                 WrapperPlayServerSetSlot packet = new WrapperPlayServerSetSlot(event);
                 Player player = event.getPlayer();
                 Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()))
-                        .getInventory().put(packet.getSlot(), packet.getItem());
+                        .getInventory().put(packet.getSlot(), ItemUtils.fixItem(packet.getItem()));
             }
         }
     }
