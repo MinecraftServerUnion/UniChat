@@ -4,7 +4,6 @@ import com.github.retrooper.packetevents.protocol.component.ComponentTypes;
 import com.github.retrooper.packetevents.protocol.item.ItemStack;
 import com.velocitypowered.api.proxy.Player;
 import dev.onelili.unichat.velocity.gui.GUIData;
-import dev.onelili.unichat.velocity.util.Logger;
 import dev.onelili.unichat.velocity.util.PlayerData;
 import dev.onelili.unichat.velocity.message.Message;
 import dev.onelili.unichat.velocity.util.TimedHashMap;
@@ -36,8 +35,8 @@ public class ShowItemModule extends PatternModule {
                 .append(Component.text("[").color(NamedTextColor.GRAY))
                 .append(
                         item.getComponentOr(ComponentTypes.CUSTOM_NAME, item.getComponentOr(ComponentTypes.ITEM_NAME, Component.text("Unknown")))
-                                .hoverEvent(HoverEvent.showText(Message.getMessage("show-item.hover-text").toComponent()))
-                                .clickEvent(ClickEvent.runCommand("/unichat item " + uuid))
+//                                .hoverEvent(HoverEvent.showText(Message.getMessage("show-item.hover-text").toComponent()))
+//                                .clickEvent(ClickEvent.runCommand("/unichat item " + uuid))
                 )
                 .append(Component.text("]").color(NamedTextColor.GRAY));
     }

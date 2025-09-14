@@ -1,7 +1,6 @@
 package dev.onelili.unichat.velocity.gui;
 
 import com.github.retrooper.packetevents.PacketEvents;
-import com.github.retrooper.packetevents.event.SimplePacketListenerAbstract;
 import com.github.retrooper.packetevents.protocol.item.ItemStack;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerCloseWindow;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerOpenWindow;
@@ -18,9 +17,9 @@ import java.util.List;
 import java.util.Set;
 
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class GUIContainer extends SimplePacketListenerAbstract {
+public class GUIContainer {
     @Getter
-    private static final Set<Integer> states = new HashSet<>();
+    private static final Set<GUIContainer> guis = new HashSet<>();
     @Nonnull
     @Getter
     private GUIData data;
@@ -30,16 +29,13 @@ public class GUIContainer extends SimplePacketListenerAbstract {
     }
 
     public void close(@Nonnull Player player) {
-        states.remove(data.stateId());
+        guis.remove(this);
         WrapperPlayServerCloseWindow wrapper = new WrapperPlayServerCloseWindow();
         wrapper.setWindowId(data.windowId());
-        PacketEvents.getAPI().getPlayerManager().sendPacket(player, wrapper);
-        PacketEvents.getAPI().getEventManager().unregisterListener(this);
     }
 
     public void open(@Nonnull Player player) {
-        states.add(data.stateId());
-        PacketEvents.getAPI().getEventManager().registerListener(this);
+        guis.add(this);
         if(data.slots() / 9 - 1 <= 5 || data.slots() / 9 - 1 >= 0) {
             WrapperPlayServerOpenWindow wrapper = new WrapperPlayServerOpenWindow(
                     data.windowId(),

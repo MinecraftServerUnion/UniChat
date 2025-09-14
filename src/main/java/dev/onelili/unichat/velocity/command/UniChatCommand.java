@@ -27,19 +27,16 @@ public class UniChatCommand implements SimpleCommand {
                     invocation.source().sendMessage(new Message("<#47BFFB>UniChat has been reloaded.").toComponent());
                 }
             }
-            case "item" -> {
-                Logger.error("断点1");
-                if(invocation.arguments().length == 2) {
-                    Logger.error("断点2");
-                    UUID uuid = UUID.fromString(invocation.arguments()[1]);
-                    if(ShowItemModule.getGuiMap().containsKey(uuid) && invocation.source() instanceof Player player) {
-                        Logger.error("断点3");
-                        GUIData data = ShowItemModule.getGuiMap().get(uuid);
-                        GUIContainer container = GUIContainer.of(data);
-                        container.open(player);
-                    }
-                }
-            }
+//            case "item" -> {
+//                if(invocation.arguments().length == 2) {
+//                    UUID uuid = UUID.fromString(invocation.arguments()[1]);
+//                    if(ShowItemModule.getGuiMap().containsKey(uuid) && invocation.source() instanceof Player player) {
+//                        GUIData data = ShowItemModule.getGuiMap().get(uuid);
+//                        GUIContainer container = GUIContainer.of(data);
+//                        container.open(player);
+//                    }
+//                }
+//            }
             default -> {
                 invocation.source().sendMessage(new Message("&cUnknown unichat command.").toComponent());
             }

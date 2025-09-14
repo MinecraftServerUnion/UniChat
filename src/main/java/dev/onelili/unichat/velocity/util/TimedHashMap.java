@@ -15,7 +15,7 @@ import java.util.function.Function;
 public class TimedHashMap<K, V> extends ConcurrentHashMap<K, V> implements TimedMap<K, V> {
     private final ConcurrentMap<K, Long> timestamps = new ConcurrentHashMap<>();
     private final ConcurrentMap<K, Long> keyExpirationTimes = new ConcurrentHashMap<>();
-    private final AtomicLong globalExpirationTime = new AtomicLong(60000); // 默认60秒
+    private final AtomicLong globalExpirationTime = new AtomicLong(60000);
     private final ScheduledExecutorService cleanupScheduler = Executors.newSingleThreadScheduledExecutor();
 
     public TimedHashMap(long expirationTime, TimeUnit unit) {
@@ -25,7 +25,7 @@ public class TimedHashMap<K, V> extends ConcurrentHashMap<K, V> implements Timed
     }
 
     public TimedHashMap() {
-        this(60, TimeUnit.SECONDS); // 默认60秒
+        this(60, TimeUnit.SECONDS);
     }
 
     public TimedHashMap(int initialCapacity, long expirationTime, TimeUnit unit) {
