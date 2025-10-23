@@ -35,7 +35,7 @@ public class RoomChannelHandler implements ChannelHandler {
     public void handle(@NotNull SimplePlayer player, @NotNull String message) {
         if(!rooms.containsKey(player))
             throw new ShitMountainException("Player "+player.getName()+" is not in a room but somehow called room channel!");
-        Component msg = PatternModule.handleMessage(player.player, message, true),
+        Component msg = PatternModule.handleMessage(player.getPlayer(), message, true),
                 component = new Message(channel.getChannelConfig().getString("format"))
                 .add("player", player.getName())
                 .add("room_code", rooms.get(player)).toComponent()
@@ -49,7 +49,7 @@ public class RoomChannelHandler implements ChannelHandler {
         for(SimplePlayer p : getPlayersInRoom(rooms.get(player))){
             if(channel.getReceivePermission() != null&&!p.hasPermission(channel.getReceivePermission()))
                 continue;
-            p.player.sendMessage(component);
+            p.getPlayer().sendMessage(component);
         }
     }
 

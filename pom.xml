@@ -96,6 +96,10 @@
                                     <pattern>com.github.retrooper.packetevents</pattern>
                                     <shadedPattern>dev.onelili.unichat.lib.packetevents</shadedPattern>
                                 </relocation>
+                                <relocation>
+                                    <pattern>com.zaxxer.hikari</pattern>
+                                    <shadedPattern>dev.onelili.unichat.lib.hikari</shadedPattern>
+                                </relocation>
 <!--                                <relocation>-->
 <!--                                    <pattern>com.zaxxer.hikari</pattern>-->
 <!--                                    <shadedPattern>dev.onelili.unichat.lib.hikari</shadedPattern>-->

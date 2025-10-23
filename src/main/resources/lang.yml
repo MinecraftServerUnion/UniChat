@@ -36,6 +36,7 @@ show-item:
   window-title: "物品详情"
 
 chat:
+  console-name: "CONSOLE"
   channel-declined: "<#CC1613>错误: <#F85654>在此服务器无法通过该频道发送消息! &e&l<click:run_command:'/l'>[切换频道]</click>"
   no-send-permission: "<#CC1613>错误: <#F85654>你没有在该频道发送消息的权限! &e&l<click:run_command:'/l'>[切换频道]</click>"
   cannot-command-send-passthrough: "<#CC1613>错误: <#F85654>该频道不允许通过命令发送消息!"

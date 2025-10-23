@@ -1,15 +1,42 @@
 package dev.onelili.unichat.velocity.util;
 
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ServerConnection;
 import dev.onelili.unichat.velocity.message.Message;
+import dev.onelili.unichat.velocity.message.MessageLoader;
+import lombok.Getter;
 import net.kyori.adventure.bossbar.BossBar;
 
 import javax.annotation.Nonnull;
 import java.util.UUID;
 
 public class SimplePlayer {
-    public final Player player;
-    public SimplePlayer(@Nonnull Player player){
+    public static SimplePlayer console;
+    static {
+        console = new SimplePlayer(null){
+            @Override
+            public String getName() {
+                return MessageLoader.getMessage("chat.console-name", "CONSOLE").toString();
+            }
+            @Override
+            public UUID getPlayerUUID() {
+                return null;
+            }
+            @Override
+            public boolean hasPermission(@Nonnull String permission) {
+                return true;
+            }
+        };
+    }
+
+    @Getter
+    private final Player player;
+
+    public ServerConnection getCurrentServer() {
+        return player.getCurrentServer().orElse(null);
+    }
+
+    public SimplePlayer(Player player){
         this.player = player;
     }
 

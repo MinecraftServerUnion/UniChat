@@ -29,12 +29,12 @@ public class GlobalChannelHandler implements ChannelHandler {
         Message msg = new Message(channel.getChannelConfig().getString("format"));
         msg.add("player", player.getName());
         msg.add("channel", channel.getDisplayName());
-        Component cmp = PatternModule.handleMessage(player.player, message, true);
+        Component cmp = PatternModule.handleMessage(player.getPlayer(), message, true);
         Component component = msg.toComponent().append(cmp);
 
         ChatHistoryManager.recordMessage(player.getName(),
                 channel.getId(),
-                player.player.getCurrentServer().isPresent()?player.player.getCurrentServer().get().getServerInfo().getName():null,
+                player.getCurrentServer()!=null?player.getCurrentServer().getServerInfo().getName():null,
                 LegacyComponentSerializer.legacyAmpersand().serialize(cmp));
 
         for(Player receiver : UniChat.getProxy().getAllPlayers()) {

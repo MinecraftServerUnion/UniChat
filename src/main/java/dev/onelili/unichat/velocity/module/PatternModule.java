@@ -7,6 +7,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -20,7 +21,8 @@ public abstract class PatternModule {
         modules.put("i", new ShowItemModule());
     }
 
-    public static @Nonnull Component handleMessage(@Nonnull Player sender, @Nonnull String message, boolean doProcess) {
+    public static @Nonnull Component handleMessage(@Nullable Player sender, @Nonnull String message, boolean doProcess) {
+        if(sender == null) return Component.text(message);
         StringBuilder current = new StringBuilder();
         Component result = Component.empty();
 

@@ -87,7 +87,7 @@ public class RedisChannelHandler implements ChannelHandler {
         msg.add("player", player.getName());
         msg.add("channel", channel.getDisplayName());
         MapTree cont =  new MapTree()
-                .put("msg", MiniMessage.miniMessage().serialize(PatternModule.handleMessage(player.player, message, true)))
+                .put("msg", MiniMessage.miniMessage().serialize(PatternModule.handleMessage(player.getPlayer(), message, true)))
                 .put("sender", player.getName())
                 .put("server", Config.getString("server-name"));
         jedis.publish("unichat-channel-" + channel.getId(), cont.toJson());
