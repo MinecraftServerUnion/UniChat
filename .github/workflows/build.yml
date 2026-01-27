@@ -1,0 +1,58 @@
+name: UniChat Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'zulu'
+        cache: maven
+    - name: Build with Maven
+      run: mvn -B package --file pom.xml
+    - name: Upload UniChat
+      uses: actions/upload-artifact@v4.6.2
+      with:
+        name: UniChat
+        path: "*/target/UniChat-*.jar"
+    - uses: dev-drprasad/delete-tag-and-release@v0.2.1
+      if: ${{ github.event_name == 'push' }}
+      with:
+        delete_release: true
+        tag_name: dev-build
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Find git version
+      id: git-version
+      run: echo "id=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+    - name: Find the correct plugin JAR
+      if: ${{ github.event_name == 'push' }}
+      id: find-jar
+      run: |
+        output="$(find /home/runner/work/UniChat/UniChat/target/ -name "UniChat-*.jar" -type f -printf "%f\n")"
+        echo "::set-output name=jarname::$output"
+    - name: Find the correct api JAR
+      if: ${{ github.event_name == 'push' }}
+      id: find-jar-api
+      run: |
+        output="$(find /home/runner/work/UniChat/UniChat/target/ -name "UniChat-*-Api.jar" -type f -printf "%f\n")"
+        echo "::set-output name=jarname::$output"
+    - name: Release the build
+      if: ${{ github.event_name == 'push' }}
+      uses: ncipollo/release-action@v1
+      with:
+        artifacts: /home/runner/work/UniChat/UniChat/core/target/${{ steps.find-jar.outputs.jarname }},/home/runner/work/UniChat/UniChat/target/${{ steps.find-jar-api.outputs.jarname }}
+        body: ${{ join(github.event.commits.*.message, '\n') }}
+        prerelease: true
+        name: Dev-build ${{ steps.git-version.outputs.id }}
+        tag: dev-build
