@@ -15,9 +15,7 @@ import dev.onelili.unichat.velocity.channel.Channel;
 import dev.onelili.unichat.velocity.command.ChatHistoryCommand;
 import dev.onelili.unichat.velocity.command.DirectMessageCommand;
 import dev.onelili.unichat.velocity.command.UniChatCommand;
-import dev.onelili.unichat.velocity.handler.ChatHistoryManager;
-import dev.onelili.unichat.velocity.handler.EventListener;
-import dev.onelili.unichat.velocity.handler.PacketEventListener;
+import dev.onelili.unichat.velocity.handler.*;
 import dev.onelili.unichat.velocity.message.MessageLoader;
 import dev.onelili.unichat.velocity.module.PatternModule;
 import dev.onelili.unichat.velocity.util.Config;
@@ -70,6 +68,10 @@ public class UniChat {
         Config.init();
         MessageLoader.initialize();
 
+        if(Config.getConfigTree().getBoolean("redis.enabled", false)){
+            RedisRemoteManager.setInstance(new RedisRemoteManager());
+        }
+
         PlaceholderUtil.init();
 
         PacketEvents.setAPI(VelocityPacketEventsBuilder.build(proxy, proxy.getPluginManager().fromInstance(this).orElseThrow(), logger, dataDirectory.toPath()));
@@ -89,7 +91,7 @@ public class UniChat {
         getProxy().getCommandManager().register(getProxy().getCommandManager().metaBuilder("unichat").build(), new UniChatCommand());
         getProxy().getCommandManager().register(getProxy().getCommandManager().metaBuilder("chathistory").aliases("chathist", "ch").build(), new ChatHistoryCommand());
 
-        ChatHistoryManager.init();
+        DatabaseHandler.init();
 
         // For Luckperms to load the nodes
         getProxy().getConsoleCommandSource().hasPermission("unichat.chathistory");
@@ -100,8 +102,14 @@ public class UniChat {
     public static void reload() {
         Config.reload();
         MessageLoader.initialize();
-        ChatHistoryManager.dataSource.close();
-        ChatHistoryManager.init();
+
+        if(Config.getConfigTree().getBoolean("redis.enabled", false)){
+            if(RedisRemoteManager.getInstance()!=null) RedisRemoteManager.getInstance().shutdown();
+            RedisRemoteManager.setInstance(new RedisRemoteManager());
+        }
+
+        DatabaseHandler.getInstance().getDatasource().close();
+        DatabaseHandler.init();
         for(CommandMeta commandMetas: Channel.getRegisteredChannelCommands()){
             getProxy().getCommandManager().unregister(commandMetas);
         }
@@ -124,6 +132,7 @@ public class UniChat {
 
     @Subscribe
     public void onProxyShutdown(@Nonnull ProxyShutdownEvent event) {
+        if(RedisRemoteManager.getInstance()!=null) RedisRemoteManager.getInstance().shutdown();
         PacketEvents.getAPI().terminate();
     }
 }

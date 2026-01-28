@@ -193,5 +193,11 @@
             <version>3.50.3.0</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.18</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 </project>

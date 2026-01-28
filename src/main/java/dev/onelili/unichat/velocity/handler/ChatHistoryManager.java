@@ -18,26 +18,10 @@ import java.util.List;
 @Getter
 public class ChatHistoryManager {
     public static record ChatMessage(String sender, String channel, String server, String message, long time){}
-    public static HikariDataSource dataSource;
 
-    @SneakyThrows
-    public static void init() {
-        HikariConfig otherConfig = new HikariConfig();
-        otherConfig.setDriverClassName("org.sqlite.JDBC");
-        otherConfig.setJdbcUrl("jdbc:sqlite:" + new File(UniChat.getDataDirectory(), "chathistory.db").getAbsolutePath());
-        dataSource = new HikariDataSource(otherConfig);
-
-        try (Connection connection = getConnection()) {
-            connection.prepareStatement("CREATE TABLE IF NOT EXISTS chathistory (id INTEGER PRIMARY KEY AUTOINCREMENT, channel VARCHAR(255), sender VARCHAR(255), server VARCHAR(255), message TEXT, time BIGINT)").execute();
-        }
-    }
-
-    public static Connection getConnection() throws SQLException {
-        return dataSource.getConnection();
-    }
     @SneakyThrows
     public static void recordMessage(String sender, String channel, String server, String message) {
-        try (Connection connection = getConnection()) {
+        try (Connection connection = DatabaseHandler.getInstance().getConnection()) {
             PreparedStatement st = connection.prepareStatement("INSERT INTO chathistory (sender, channel, server, message, time) VALUES (?,?,?,?,?)");
             st.setString(1, sender);
             st.setString(2, channel);
@@ -49,7 +33,7 @@ public class ChatHistoryManager {
     }
     @SneakyThrows
     public static List<ChatMessage> searchHistory(String query, @Nullable String channel, int limit, int offset){
-        try (Connection connection = getConnection()) {
+        try (Connection connection = DatabaseHandler.getInstance().getConnection()) {
             String tmp="SELECT * FROM chathistory WHERE message LIKE '%' || ? || '%'"+(channel!= null ? " AND channel = '"+channel+"'" : "")+" ORDER BY time DESC LIMIT ? OFFSET ?";
             System.out.println(tmp.replaceFirst("\\?", "'"+query+"'").replaceFirst("\\?", String.valueOf(limit)).replaceFirst("\\?", String.valueOf(offset)));
             PreparedStatement st = connection.prepareStatement("SELECT * FROM chathistory WHERE message LIKE '%' || ? || '%'"+(channel!= null ? " AND channel = '"+channel+"'" : "")+" ORDER BY time DESC LIMIT ? OFFSET ?");
@@ -66,7 +50,7 @@ public class ChatHistoryManager {
     }
     @SneakyThrows
     public static List<ChatMessage> listHistoryBefore(long startTime, int limit, @Nullable String channel){
-        try (Connection connection = getConnection()) {
+        try (Connection connection = DatabaseHandler.getInstance().getConnection()) {
             PreparedStatement st = connection.prepareStatement("SELECT * FROM chathistory WHERE time <= ?"+(channel!= null ? " AND channel = '"+channel+"'" : "")+" ORDER BY time DESC LIMIT ?");
             st.setLong(1, startTime);
             st.setInt(2, limit);
@@ -80,7 +64,7 @@ public class ChatHistoryManager {
     }
     @SneakyThrows
     public static List<ChatMessage> listHistoryAfter(long startTime, int limit, @Nullable String channel){
-        try (Connection connection = getConnection()) {
+        try (Connection connection = DatabaseHandler.getInstance().getConnection()) {
             PreparedStatement st = connection.prepareStatement("SELECT * FROM chathistory WHERE time >= ?"+(channel!= null ? " AND channel = '"+channel+"'" : "")+" ORDER BY time LIMIT ?");
             st.setLong(1, startTime);
             st.setInt(2, limit);

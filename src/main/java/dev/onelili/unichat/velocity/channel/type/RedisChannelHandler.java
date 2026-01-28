@@ -5,91 +5,66 @@ import dev.onelili.unichat.velocity.UniChat;
 import dev.onelili.unichat.velocity.channel.Channel;
 import dev.onelili.unichat.velocity.channel.ChannelHandler;
 import dev.onelili.unichat.velocity.handler.ChatHistoryManager;
+import dev.onelili.unichat.velocity.handler.RedisRemoteManager;
 import dev.onelili.unichat.velocity.message.Message;
 import dev.onelili.unichat.velocity.module.PatternModule;
 import dev.onelili.unichat.velocity.util.Config;
 import dev.onelili.unichat.velocity.util.Logger;
 import dev.onelili.unichat.velocity.util.MapTree;
 import dev.onelili.unichat.velocity.util.SimplePlayer;
+import lombok.Getter;
 import lombok.SneakyThrows;
+import net.kyori.adventure.chat.ChatType;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import redis.clients.jedis.*;
 
 import javax.annotation.Nonnull;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class RedisChannelHandler implements ChannelHandler {
-    private final String address;
-    private final int port;
-    private final String password, username;
-    private final JedisPooled jedis;
-    private final Channel channel;
-    private final Thread thread;
+    @Getter
+    private static Map<String, RedisChannelHandler> redisChannels = new HashMap<>();
+
+    @Getter
+    private Channel channel;
 
     @SneakyThrows
     public RedisChannelHandler(@Nonnull Channel channel) {
-        this.address = channel.getChannelConfig().getString("redis-address");
-        this.username = channel.getChannelConfig().getString("redis-user", null);
-        this.password = channel.getChannelConfig().getString("redis-password", null);
-        this.port = channel.getChannelConfig().getInt("redis-port", 6379);
-
         this.channel = channel;
-        try {
-            if (username != null)
-                jedis = new JedisPooled(address, port, username, password);
-            else
-                jedis = new JedisPooled(address, port);
 
-            thread = new Thread(() -> jedis.subscribe(new JedisPubSub() {
-                @Override
-                public void onMessage(@Nonnull String ch, @Nonnull String messageTree) {
-                    MapTree cont = MapTree.fromJson(messageTree);
-                    Component message = MiniMessage.miniMessage().deserialize(cont.getString("msg"));
-                    String sender = cont.getString("sender");
-                    Message msg = new Message(channel.getChannelConfig().getString("format"));
-                    msg.add("player", sender);
-                    msg.add("server", cont.getString("server"));
-                    msg.add("channel", channel.getDisplayName());
+        redisChannels.put(channel.getId(), this);
 
-                    ChatHistoryManager.recordMessage(sender,
-                            channel.getId(),
-                            cont.getString("server"),
-                            LegacyComponentSerializer.legacyAmpersand().serialize(message));
-
-                    Component component = msg.toComponent().append(message);
-                    for (Player receiver : UniChat.getProxy().getAllPlayers()) {
-                        if(channel.getReceivePermission() != null&&!receiver.hasPermission(channel.getReceivePermission()))
-                            continue;
-                        receiver.sendMessage(component);
-                    }
-                    if (channel.isLogToConsole())
-                        UniChat.getProxy().getConsoleCommandSource().sendMessage(component);
-                }
-            }, "unichat-channel-" + channel.getId()));
-            thread.start();
-        }catch (Exception e){
-            Logger.error("Failed to connect to Redis server: " + e.getMessage());
-            Logger.error("Disabling redis channel: "+channel.getId());
-            throw e;
+        if(RedisRemoteManager.getInstance()==null){
+            throw new IllegalArgumentException("Redis must be enabled in config.yml in order to use Redis-based channels!");
         }
     }
 
     @Override
-    public void destroy() {
-        thread.interrupt();
-        jedis.close();
+    public void handle(@Nonnull SimplePlayer player, @Nonnull String message) {
+        MapTree cont = new MapTree()
+                .put("msg", MiniMessage.miniMessage().serialize(PatternModule.handleMessage(player.getPlayer(), message, false)))
+                .put("sender", player.getName())
+                .put("server", Config.getString("server-name"))
+                .put("type", "channel")
+                .put("channel", channel.getId());
+        RedisRemoteManager.getInstance().getJedis().publish("unichat-channel", cont.toJson());
     }
 
-    @Override
-    public void handle(@Nonnull SimplePlayer player, @Nonnull String message) {
+    public void receive(String sender, String server, Component cmp) {
         Message msg = new Message(channel.getChannelConfig().getString("format"));
-        msg.add("player", player.getName());
+        msg.add("player", sender);
+        msg.add("server", server);
         msg.add("channel", channel.getDisplayName());
-        MapTree cont =  new MapTree()
-                .put("msg", MiniMessage.miniMessage().serialize(PatternModule.handleMessage(player.getPlayer(), message, true)))
-                .put("sender", player.getName())
-                .put("server", Config.getString("server-name"));
-        jedis.publish("unichat-channel-" + channel.getId(), cont.toJson());
+        Component component = msg.toComponent().append(cmp);
+        for(Player receiver : UniChat.getProxy().getAllPlayers()) {
+            if(channel.getReceivePermission() != null&&!receiver.hasPermission(channel.getReceivePermission()))
+                continue;
+            receiver.sendMessage(component, ChatType.CHAT.bind(component));
+        }
+        if(channel.isLogToConsole())
+            UniChat.getProxy().getConsoleCommandSource().sendMessage(component);
     }
 }

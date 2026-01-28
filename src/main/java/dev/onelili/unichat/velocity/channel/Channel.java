@@ -66,7 +66,7 @@ public class Channel {
     private String receivePermission = null;
 
     public MapTree getChannelConfig() {
-        return Config.getSection("channels." + id);
+        return Config.getChannelTree().getSection(id);
     }
     @Nullable
     public static Channel getPlayerChannel(SimplePlayer player) {
@@ -84,32 +84,32 @@ public class Channel {
     public static void loadChannels(){
         defaultChannel = null;
         channelPrefixes.clear();
-        for(String i: Config.getSection("channels").getKeys()){
+        for(String i: Config.getChannelTree().getKeys()){
             try {
                 Channel channel = Channel.builder()
                         .id(i)
-                        .displayName(Config.getString("channels." + i + ".name"))
-                        .logToConsole(Config.getConfigTree().getBoolean("channels." + i + ".log-console", true))
-                        .receivePermission(Config.getConfigTree().getString("channels." + i + ".receive-permission", null))
-                        .sendPermission(Config.getConfigTree().getString("channels." + i + ".send-permission", null))
-                        .passthrough(Config.getConfigTree().getBoolean("channels." + i + ".passthrough", false))
+                        .displayName(Config.getChannelTree().getString(i + ".name"))
+                        .logToConsole(Config.getChannelTree().getBoolean(i + ".log-console", true))
+                        .receivePermission(Config.getChannelTree().getString(i + ".receive-permission", null))
+                        .sendPermission(Config.getChannelTree().getString(i + ".send-permission", null))
+                        .passthrough(Config.getChannelTree().getBoolean(i + ".passthrough", false))
                         .build();
-                channel.handler = channelTypes.get(Config.getString("channels." + i + ".type").toLowerCase(Locale.ROOT)).apply(channel);
-                if(Config.contains("channels." + i + ".restricted-servers")) {
-                    channel.restrictedServers = (List<String>) Config.getItem("channels." + i + ".restricted-servers");
+                channel.handler = channelTypes.get(Config.getChannelTree().getString(i + ".type").toLowerCase(Locale.ROOT)).apply(channel);
+                if(Config.getChannelTree().contains(i + ".restricted-servers")) {
+                    channel.restrictedServers = (List<String>) Config.getChannelTree().get(i + ".restricted-servers");
                 }
                 channels.put(i.toLowerCase(Locale.ROOT), channel);
-                for(String prefix: Config.getConfigTree().getStringList("channels." + i + ".prefixes")){
+                for(String prefix: Config.getChannelTree().getStringList(i + ".prefixes")){
                     channelPrefixes.put(prefix.toLowerCase(Locale.ROOT), channel);
                 }
-                List<String> commands = (List<String>) Config.getItem("channels." + i + ".commands");
+                List<String> commands = (List<String>) Config.getChannelTree().get(i + ".commands");
                 if(!commands.isEmpty()){
                     CommandMeta meta = UniChat.getProxy().getCommandManager()
                             .metaBuilder(commands.get(0))
                                     .aliases(commands.subList(1, commands.size()).toArray(String[]::new))
                                     .build();
-                registeredChannelCommands.add(meta);
-                UniChat.getProxy().getCommandManager().register(meta, channel.handler.getCommand(channel));
+                    registeredChannelCommands.add(meta);
+                    UniChat.getProxy().getCommandManager().register(meta, channel.handler.getCommand(channel));
                 }
                 if(defaultChannel == null) defaultChannel = channel;
             } catch (Exception e) {

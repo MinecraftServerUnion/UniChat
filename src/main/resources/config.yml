@@ -1,4 +1,5 @@
-# Server group name displayed in cross-server channels
+# Server group name displayed in cross-server channels. Must be unique.
+# If you wish to use redis, YOU MUST CHANGE THIS TO SOMETHING ELSE
 server-name: "Velocity"
 
 lang: "en-US"
@@ -9,68 +10,28 @@ unhandled-servers:
   - "server1"
   - "server2"
 
-# Server channel configuration below, you can freely add/delete channels
-# The first channel listed below will be set as the default channel for players when they join
-channels:
-  local:
-    name: "Local"
-    type: LOCAL
-    passthrough: true # Whether to pass messages back to the backend
-    respect-backend: true # If true, messages will only be displayed when the backend server returns the chat message. Suitable for servers that modify chat events, etc.
-    log-console: true # Whether to print chat messages to console (this option has highest priority in LOCAL type, will process regardless of backend)
-    format: "&f<click:suggest_command:'@%player%'><%player%></click> &r"
-    commands:
-      - local
-      - l
-  global:
-    name: "Global"
-    type: GLOBAL
-    format: "<#47BFFB>[GLOBAL] <click:suggest_command:'@%player%'>&8[&f%player%&8]</click>&r "
-    log-console: true
-    # Players on the following servers will not be able to send messages in this channel
-    restricted-servers:
-      - "server1"
-    commands:
-      - global
-      - g
-    # If a player's message starts with the following content, it will automatically remove that prefix and send the message to this channel, ignoring the player's actual current channel
-    prefixes:
-      - "!"
-  staff:
-    name: "Staff"
-    type: GLOBAL
-    format: "<#FFA500>[STAFF] <click:suggest_command:'@%player%'>&8[&f%player%&8]</click>&r "
-    log-console: true
-    commands:
-      - staff
-    receive-permission: "unichat.channel.staff"
-    send-permission: "unichat.channel.staff"
+database:
+  type: "sqlite" # SQLITE / MYSQL
 
-#  crossserver:
-#    name: "World"
-#    type: REDIS
-#    format: "<#47fbeb>[WORLD] %server% &8[&f%player%&8]&f "
-#    redis-address: "0.0.0.0"
-#    redis-port:  6379
-##   redis-user: "admin"
-##   redis-password: "123456"
-#    commands:
-#      - crossserver
-#      - cs
+  database: "minecraft"
+  host: "0.0.0.0"
+  port: 3306
 
-  # Note: ROOM type channels are special: there should be at most one channel marked as ROOM in the configuration!
-  # Players can use /room to switch to this channel and send messages to players in the same room
-  room:
-    name: "Room"
-    type: ROOM
-    format: "<#ff6600>[Room %room_code%] &8[&f%player%&8] &f"
-    log-console: true
-    commands:
-      - room
+  username: ""
+  password: ""
+
+
+redis:
+  enabled: false
+  address: "0.0.0.0"
+  port:  6379
+#  user: "admin"
+#  password: "123456"
 
 message: # /msg
   format-inbound: '<#47BFFB>%name% &8→ <#47BFFB>You&8: '
   format-outbound: '<#47BFFB>You &8→ <#47BFFB>%name%&8: '
+  format-third-party: '<#47BFFB>%sender% &8→ <#47BFFB>%receiver%&8: '
   message-command:
     - msg
   reply-command:

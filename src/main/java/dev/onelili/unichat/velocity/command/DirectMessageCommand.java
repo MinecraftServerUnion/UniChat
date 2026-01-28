@@ -36,12 +36,12 @@ public class DirectMessageCommand implements SimpleCommand {
             }
             var targetOpt = UniChat.getProxy().getPlayer(invocation.arguments()[0]);
             if (targetOpt.isEmpty()) {
-                sender.sendMessage(Message.getMessage("command.player-not-found").add("player", invocation.arguments()[0]).toComponent());
+                invocation.source().sendMessage(Message.getMessage("command.player-not-found").add("player", invocation.arguments()[0]).toComponent());
                 return;
             }
             target = targetOpt.get();
             if (target == sender) {
-                sender.sendMessage(Message.getMessage("command.msg-self").toComponent());
+                invocation.source().sendMessage(Message.getMessage("command.msg-self").toComponent());
                 return;
             }
             message = String.join(" ", List.of(invocation.arguments()).subList(1, invocation.arguments().length));
@@ -64,9 +64,12 @@ public class DirectMessageCommand implements SimpleCommand {
         Component inbound = new Message(Config.getString("message.format-inbound")).add("name", sender.getUsername()).toComponent()
                          .append(msg),
                  outbound = new Message(Config.getString("message.format-outbound")).add("name", target.getUsername()).toComponent()
+                         .append(msg),
+                 thirdparty = new Message(Config.getString("message.format-third-party")).add("sender", sender.getUsername()).add("target", target.getUsername()).toComponent()
                          .append(msg);
         target.sendMessage(inbound);
         sender.sendMessage(outbound);
+        UniChat.getProxy().getConsoleCommandSource().sendMessage(thirdparty);
         lastMessage.put(target.getUniqueId(), sender.getUniqueId());
         lastMessage.put(sender.getUniqueId(), target.getUniqueId());
 

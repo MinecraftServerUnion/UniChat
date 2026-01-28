@@ -10,6 +10,8 @@ import java.util.Objects;
 public class Config {
     @Getter
     private static MapTree configTree;
+    @Getter
+    private static MapTree channelTree;
 
     public static void init() {
         if(!UniChat.getDataDirectory().exists()) UniChat.getDataDirectory().mkdirs();
@@ -27,6 +29,22 @@ public class Config {
             configTree = new MapTree(new Yaml().load(inputStream));
         }catch (Exception e){
             Logger.error("Failed to load config.yml: " + e.getMessage());
+        }
+
+        File channel = new File(UniChat.getDataDirectory(), "channel.yml");
+        if(!channel.exists()){
+            try (InputStream is = UniChat.class.getClassLoader().getResourceAsStream("channel.yml"); OutputStream os = new FileOutputStream(channel)) {
+                Objects.requireNonNull(is).transferTo(os);
+            }catch (Exception e){
+                Logger.error("Cannot save channel.yml file!");
+                throw new RuntimeException(e);
+            }
+        }
+
+        try(InputStream inputStream = new FileInputStream(channel)) {
+            channelTree = new MapTree(new Yaml().load(inputStream));
+        }catch (Exception e){
+            Logger.error("Failed to load channel.yml: " + e.getMessage());
         }
     }
 
@@ -68,6 +86,21 @@ public class Config {
 
         try(InputStream is = new FileInputStream(config)){
             configTree = new MapTree(new Yaml().load(is));
+        }catch (Exception e){
+            throw new RuntimeException(e);
+        }
+
+        File channel = new File(UniChat.getDataDirectory(), "channel.yml");
+        if(!channel.exists()){
+            try (InputStream is = UniChat.class.getClassLoader().getResourceAsStream("channel.yml"); OutputStream os = new FileOutputStream(channel)) {
+                Objects.requireNonNull(is).transferTo(os);
+            } catch(Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        try(InputStream is = new FileInputStream(channel)){
+            channelTree = new MapTree(new Yaml().load(is));
         }catch (Exception e){
             throw new RuntimeException(e);
         }

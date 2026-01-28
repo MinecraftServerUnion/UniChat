@@ -21,6 +21,7 @@ public class EventListener {
     @SuppressWarnings("deprecation")
     @Subscribe(priority = Short.MIN_VALUE)
     public void onPlayerChat(@Nonnull PlayerChatEvent event) {
+        if(!event.getResult().isAllowed()) return;
         Channel channel;
         String message;
         if (Channel.channelPrefixes.containsKey(event.getMessage().substring(0, 1))) {
