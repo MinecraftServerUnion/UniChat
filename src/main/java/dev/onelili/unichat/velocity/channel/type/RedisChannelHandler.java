@@ -45,7 +45,7 @@ public class RedisChannelHandler implements ChannelHandler {
     @Override
     public void handle(@Nonnull SimplePlayer player, @Nonnull String message) {
         MapTree cont = new MapTree()
-                .put("msg", MiniMessage.miniMessage().serialize(PatternModule.handleMessage(player.getPlayer(), message, false)))
+                .put("msg", MiniMessage.miniMessage().serialize(PatternModule.handleMessage(player.getPlayer(), message, List.of())))
                 .put("sender", player.getName())
                 .put("server", Config.getString("server-name"))
                 .put("type", "channel")

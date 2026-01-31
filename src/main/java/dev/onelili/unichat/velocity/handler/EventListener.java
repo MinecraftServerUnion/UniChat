@@ -6,7 +6,7 @@ import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.player.PlayerChatEvent;
 import dev.onelili.unichat.velocity.UniChat;
 import dev.onelili.unichat.velocity.channel.Channel;
-import dev.onelili.unichat.velocity.channel.type.LocalChannelHandler;
+import dev.onelili.unichat.velocity.channel.type.serverwide.LocalChannelHandler;
 import dev.onelili.unichat.velocity.command.DirectMessageCommand;
 import dev.onelili.unichat.velocity.message.Message;
 import dev.onelili.unichat.velocity.module.PatternModule;
@@ -16,6 +16,7 @@ import dev.onelili.unichat.velocity.util.PlayerData;
 import net.kyori.adventure.text.Component;
 
 import javax.annotation.Nonnull;
+import java.util.List;
 
 public class EventListener {
     @SuppressWarnings("deprecation")
@@ -54,7 +55,7 @@ public class EventListener {
         else{
             if(channel.getHandler() instanceof LocalChannelHandler) {
                 if (channel.isLogToConsole()) {
-                    Component msg = PatternModule.handleMessage(event.getPlayer(), message, false);
+                    Component msg = PatternModule.handleMessage(event.getPlayer(), message, List.of());
                     PlaceholderUtil.replacePlaceholders(channel.getChannelConfig().getString("format"), event.getPlayer())
                             .thenAccept(text->{
                                 Component component = new Message(text)

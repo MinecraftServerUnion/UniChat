@@ -11,10 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import javax.annotation.Nonnull;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class GUIContainer {
@@ -23,7 +20,6 @@ public class GUIContainer {
     @Nonnull
     @Getter
     private GUIData data;
-
     public static @Nonnull GUIContainer of(@Nonnull GUIData data) {
         return new GUIContainer(data);
     }

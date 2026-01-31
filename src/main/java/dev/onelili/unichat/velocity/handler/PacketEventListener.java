@@ -7,18 +7,22 @@ import com.github.retrooper.packetevents.event.SimplePacketListenerAbstract;
 import com.github.retrooper.packetevents.event.simple.PacketPlayReceiveEvent;
 import com.github.retrooper.packetevents.event.simple.PacketPlaySendEvent;
 import com.github.retrooper.packetevents.protocol.ConnectionState;
+import com.github.retrooper.packetevents.protocol.advancements.AdvancementHolder;
+import com.github.retrooper.packetevents.protocol.advancements.AdvancementProgress;
 import com.github.retrooper.packetevents.protocol.chat.message.ChatMessage_v1_16;
 import com.github.retrooper.packetevents.protocol.item.ItemStack;
-import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientClickWindow;
-import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientCloseWindow;
-import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientHeldItemChange;
-import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerPosition;
+import com.github.retrooper.packetevents.protocol.packettype.PacketType;
+import com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon;
+import com.github.retrooper.packetevents.protocol.player.DiggingAction;
+import com.github.retrooper.packetevents.resources.ResourceLocation;
+import com.github.retrooper.packetevents.wrapper.play.client.*;
 import com.github.retrooper.packetevents.wrapper.play.server.*;
 import com.velocitypowered.api.proxy.Player;
 import dev.onelili.unichat.velocity.UniChat;
 import dev.onelili.unichat.velocity.channel.Channel;
 import dev.onelili.unichat.velocity.gui.GUIContainer;
 import dev.onelili.unichat.velocity.util.Config;
+import dev.onelili.unichat.velocity.util.Logger;
 import dev.onelili.unichat.velocity.util.PlayerData;
 import dev.onelili.unichat.velocity.util.ShitMountainException;
 import lombok.SneakyThrows;
@@ -27,19 +31,36 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import javax.annotation.Nonnull;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+
+import static com.github.retrooper.packetevents.protocol.packettype.PacketType.Play.Server.*;
+import static com.github.retrooper.packetevents.protocol.packettype.PacketType.Play.Client.*;
 
 public class PacketEventListener extends SimplePacketListenerAbstract {
+    private static boolean enableDebugPacketLogging = false;
+    private static int debugLoggingDepth = 1;
+    public static List<PacketTypeCommon> filtered = List.of(
+            ENTITY_MOVEMENT,
+            ENTITY_RELATIVE_MOVE,
+            PacketType.Play.Client.KEEP_ALIVE,
+            PacketType.Play.Server.KEEP_ALIVE,
+            PLAYER_POSITION,
+            PLAYER_POSITION_AND_ROTATION,
+            CLIENT_TICK_END,
+            TIME_UPDATE,
+            CHUNK_DATA,
+            ENTITY_HEAD_LOOK,
+            ENTITY_POSITION_SYNC,
+            SPAWN_ENTITY,
+            BLOCK_ACTION
+    );
     public PacketEventListener() {
         super(PacketListenerPriority.NORMAL);
     }
-
     @Override
     public void onPacketPlaySend(@Nonnull PacketPlaySendEvent event) {
         if(event.getPlayer()==null||((Player) event.getPlayer()).getCurrentServer().isEmpty()||event.getConnectionState()== ConnectionState.LOGIN) return;
+        if(!filtered.contains(event.getPacketType())&&enableDebugPacketLogging) listenTo(event, debugLoggingDepth);
         switch(event.getPacketType()) {
             case CHAT_MESSAGE -> {
                 WrapperPlayServerChatMessage packet = new WrapperPlayServerChatMessage(event);
@@ -78,25 +99,40 @@ public class PacketEventListener extends SimplePacketListenerAbstract {
                 Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()))
                         .setHandItem(packet.getSlot());
             }
-//            case SET_SLOT -> {
+            case SET_SLOT -> {
 //                listenTo(event, 1);
-//                WrapperPlayServerSetSlot packet = new WrapperPlayServerSetSlot(event);
-//                Player player = event.getPlayer();
-//                Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()))
-//                        .getInventory().put(packet.getSlot(), ItemUtils.fixItem(packet.getItem()));
-//            }
-//            case CLOSE_WINDOW -> {
-//                WrapperPlayServerCloseWindow packet = new WrapperPlayServerCloseWindow(event);
-//                try {
-//                    GUIContainer.getGuis().remove(GUIContainer.getGuis().stream().filter(gui -> gui.getData().windowId() == packet.getWindowId()).findFirst().orElseThrow(() -> new ShitMountainException("null")));
-//                } catch(Exception ignored) {}
-//            }
+                WrapperPlayServerSetSlot packet = new WrapperPlayServerSetSlot(event);
+                if(packet.getWindowId()==0) {
+                    Player player = event.getPlayer();
+                    Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()))
+                            .getInventory().put(packet.getSlot(), packet.getItem());
+                }
+            }
+            case WINDOW_ITEMS -> {
+                WrapperPlayServerWindowItems packet = new WrapperPlayServerWindowItems(event);
+                Player player = event.getPlayer();
+                var playerData = Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()));
+                if(packet.getWindowId()==0) {
+                    for (int i = 0; i < packet.getItems().size(); i++) {
+                        playerData.getInventory().put(i, packet.getItems().get(i));
+                    }
+                }
+                playerData.getInventorySizes().put(packet.getWindowId(), packet.getItems().size());
+//                System.out.println(packet.getWindowId()+": "+packet.getItems().size());
+            }
+            case CLOSE_WINDOW -> {
+                WrapperPlayServerCloseWindow packet = new WrapperPlayServerCloseWindow(event);
+                try {
+                    GUIContainer.getGuis().remove(GUIContainer.getGuis().stream().filter(gui -> gui.getData().windowId() == packet.getWindowId()).findFirst().orElseThrow(() -> new ShitMountainException("null")));
+                } catch(Exception ignored) {}
+            }
         }
     }
 
     @Override
     public void onPacketPlayReceive(@Nonnull PacketPlayReceiveEvent event) {
         if(event.getPlayer()==null||((Player) event.getPlayer()).getCurrentServer().isEmpty()||event.getConnectionState()== ConnectionState.LOGIN) return;
+        if(!filtered.contains(event.getPacketType())&&enableDebugPacketLogging) listenTo(event, debugLoggingDepth);
         switch(event.getPacketType()) {
             case PLAYER_POSITION -> {
                 WrapperPlayClientPlayerPosition packet = new WrapperPlayClientPlayerPosition(event);
@@ -110,51 +146,85 @@ public class PacketEventListener extends SimplePacketListenerAbstract {
                 Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()))
                         .setHandItem(packet.getSlot());
             }
-//            case CLICK_WINDOW -> {
-//                WrapperPlayClientClickWindow packet = new WrapperPlayClientClickWindow(event);
-//                Player player = event.getPlayer();
-//                GUIContainer[] gui = new GUIContainer[1];
-//                GUIContainer.getGuis().stream().filter(obj -> obj.getData().windowId() == packet.getWindowId()).forEach(obj -> gui[0] = obj);
-//                if(gui[0] != null) {
-//                    List<ItemStack> items = new ArrayList<>();
-//                    for(int i = 0; i <= gui[0].getData().slots() / 9 * 9; i++)
-//                        if(gui[0].getData().items().get(i) != null)
-//                            items.add(gui[0].getData().items().get(i));
-//                        else
-//                            items.add(ItemStack.EMPTY);
-//                    WrapperPlayServerWindowItems wrapper1 = new WrapperPlayServerWindowItems(
-//                            packet.getWindowId(),
-//                            packet.getStateId().orElse(0),
-//                            items,
-//                            null
-//                    );
-//                    PacketEvents.getAPI().getPlayerManager().sendPacket(player, wrapper1);
-//                     // TODO:更新物品栏
-//                }
-//            }
-//            case CLOSE_WINDOW -> {
-//                WrapperPlayClientCloseWindow packet = new WrapperPlayClientCloseWindow(event);
-//                try {
-//                    GUIContainer.getGuis().remove(GUIContainer.getGuis().stream().filter(gui -> gui.getData().windowId() == packet.getWindowId()).findFirst().orElseThrow(() -> new ShitMountainException("null")));
-//                } catch(Exception ignored) {}
-//            }
+            case CREATIVE_INVENTORY_ACTION -> {
+                WrapperPlayClientCreativeInventoryAction packet = new WrapperPlayClientCreativeInventoryAction(event);
+                Player player = event.getPlayer();
+                var playerData = Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()));
+                playerData.getInventory().put(packet.getSlot(), packet.getItemStack());
+            }
+            case PLAYER_DIGGING -> {
+                WrapperPlayClientPlayerDigging packet = new WrapperPlayClientPlayerDigging(event);
+                Player player = event.getPlayer();
+                var playerData = Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()));
+                var mainhand = playerData.getInventory().get(playerData.getHandItem() + 36);
+                if(mainhand == null) return;
+                if(packet.getAction() == DiggingAction.DROP_ITEM){
+                    if(mainhand.getAmount()-1<=0) playerData.getInventory().remove(playerData.getHandItem() + 36);
+                    else mainhand.setAmount(mainhand.getAmount()-1);
+                }else if(packet.getAction() == DiggingAction.DROP_ITEM_STACK){
+                    playerData.getInventory().remove(playerData.getHandItem() + 36);
+                }
+            }
+            case CLICK_WINDOW -> {
+                WrapperPlayClientClickWindow packet = new WrapperPlayClientClickWindow(event);
+                Player player = event.getPlayer();
+                System.out.println(packet.getWindowId()+": "+packet.getSlot());
+                if(packet.getWindowId()==0&&packet.getSlot()!=-999&&packet.getHashedSlots()!=null) {
+                    var playerData = Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()));
+                    packet.getHashedSlots().forEach((key, value) -> {
+                        if (value.isPresent()) {
+                            playerData.getInventory().put(key, value.get().asItemStack());
+                        } else {
+                            playerData.getInventory().remove(key);
+                        }
+                    });
+                }
+
+                GUIContainer[] gui = new GUIContainer[1];
+                GUIContainer.getGuis().stream().filter(obj -> obj.getData().windowId() == packet.getWindowId()).forEach(obj -> gui[0] = obj);
+                if(gui[0] != null) {
+                    event.setCancelled(true);
+                    List<ItemStack> items = new ArrayList<>();
+                    for(int i = 0; i <= gui[0].getData().slots() / 9 * 9; i++)
+                        if(gui[0].getData().items().get(i) != null)
+                            items.add(gui[0].getData().items().get(i));
+                        else
+                            items.add(ItemStack.EMPTY);
+                    WrapperPlayServerWindowItems wrapper1 = new WrapperPlayServerWindowItems(
+                            packet.getWindowId(),
+                            packet.getStateId().orElse(0),
+                            items,
+                            null
+                    );
+                    PacketEvents.getAPI().getPlayerManager().sendPacket(player, wrapper1);
+                    //todo: 更新物品栏
+                }
+            }
+            case CLOSE_WINDOW -> {
+                WrapperPlayClientCloseWindow packet = new WrapperPlayClientCloseWindow(event);
+                try {
+                    GUIContainer.getGuis().remove(GUIContainer.getGuis().stream().filter(gui -> gui.getData().windowId() == packet.getWindowId()).findFirst().orElseThrow(() -> new ShitMountainException("null")));
+                } catch(Exception ignored) {}
+            }
         }
     }
 
     @SneakyThrows
     private void printObject(Object obj, String prefix, int depth) {
         for (Field field : obj.getClass().getDeclaredFields()) {
-            field.setAccessible(true);
-            if (depth - 1 <= 0) {
-                String cont = Objects.toString(field.get(obj));
-                if (cont.length() > 50) {
-                    cont = cont.substring(0, 30) + "..." + cont.substring(cont.length() - 20);
+            try {
+                field.setAccessible(true);
+                if (depth - 1 <= 0) {
+                    String cont = Objects.toString(field.get(obj));
+                    if (cont.length() > 50) {
+                        cont = cont.substring(0, 30) + "..." + cont.substring(cont.length() - 20);
+                    }
+                    System.out.println(prefix + "- " + field.getName() + " : " + cont);
+                } else {
+                    System.out.println(prefix + "- " + field.getName() + " :");
+                    printObject(field.get(obj), prefix + "  ", depth - 1);
                 }
-                System.out.println(prefix+"- " + field.getName() + " : " + cont);
-            } else {
-                System.out.println(prefix+"- " + field.getName() + " :");
-                printObject(field.get(obj), prefix + "  ", depth - 1);
-            }
+            }catch(Exception ignored){}
         }
     }
 

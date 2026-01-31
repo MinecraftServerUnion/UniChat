@@ -24,6 +24,7 @@ public class PlayerData {
     private Vector3d position = new Vector3d(0,0,0);
     private int handItem = -1;
     private final Map<Integer, ItemStack> inventory = new ConcurrentHashMap<>();
+    private final Map<Integer, Integer> inventorySizes = new ConcurrentHashMap<>();
 
     public Vector3i toPacketPosition() {
         return new Vector3i((int)(position.getX() * 8), (int)(position.getY() * 8), (int)(position.getZ() * 8));

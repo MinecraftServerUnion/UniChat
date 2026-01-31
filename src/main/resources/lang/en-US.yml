@@ -28,8 +28,17 @@ command:
     chat-search-footer: "<click:run_command:'/chathistory search %channel_id% %page_prev% %keyword%'><#47BFFB>[<] Previous Page</click> &7| <click:run_command:'/chathistory search %channel_id% %page_next% %keyword%'><#47BFFB>Next Page [>]</click>"
     empty: "<#CC1613>Error: <#F85654>No chat history for this channel yet!"
 
+  online:
+    usage: "&cUsage: /online <player|server> <name>"
+    player: "<#47BFFB>Player <#35CEE9>%player% <#47BFFB>is playing on <#35CEE9>%servers%"
+    no-player: "<#47BFFB>Player <#35CEE9>%player% <#47BFFB>is not online!"
+    server: "<#35CEE9>%server% <#47BFFB>currently online: <#35CEE9>%players%"
+    empty-server: "<#35CEE9>%server% <#47BFFB>currently has no players online!"
+    server-not-found: "<#CC1613>Error: <#F85654>This server does not exist!"
+
 mention:
   bossbar-title: "&e&l%sender% mentioned you!"
+  advancement-title: "%sender% mentioned you!"
 
 show-item:
   hover-text: "&eClick to view details"

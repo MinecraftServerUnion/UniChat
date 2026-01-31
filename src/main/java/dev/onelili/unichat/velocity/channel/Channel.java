@@ -1,11 +1,12 @@
 package dev.onelili.unichat.velocity.channel;
 
 import com.velocitypowered.api.command.CommandMeta;
-import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import dev.onelili.unichat.velocity.UniChat;
 import dev.onelili.unichat.velocity.channel.type.*;
-import dev.onelili.unichat.velocity.message.Message;
+import dev.onelili.unichat.velocity.channel.type.serverwide.GlobalChannelHandler;
+import dev.onelili.unichat.velocity.channel.type.serverwide.LocalChannelHandler;
+import dev.onelili.unichat.velocity.channel.type.serverwide.RoomChannelHandler;
 import dev.onelili.unichat.velocity.util.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

@@ -28,8 +28,18 @@ command:
     chat-search-footer: "<click:run_command:'/chathistory search %channel_id% %page_prev% %keyword%'><#47BFFB>[<] 上一页</click> &7| <click:run_command:'/chathistory search %channel_id% %page_next% %keyword%'><#47BFFB>下一页 [>]</click>"
     empty: "<#CC1613>错误: <#F85654>该频道暂无聊天记录!"
 
+  online:
+    usage: "&c用法: /online <player|server> <name>"
+    player: "<#47BFFB>玩家 <#35CEE9>%player% <#47BFFB>正在 <#35CEE9>%servers% <#47BFFB>中游玩"
+    no-player: "<#47BFFB>玩家 <#35CEE9>%player% <#47BFFB>不在线!"
+    server: "<#35CEE9>%server% <#47BFFB>当前在线: <#35CEE9>%players%"
+    empty-server: "<#35CEE9>%server% <#47BFFB>当前没有玩家在线!"
+    server-not-found: "<#CC1613>错误: <#F85654>该服务器不存在!"
+
+
 mention:
   bossbar-title: "&e&l%sender% 提到了你!"
+  advancement-title: "%sender% 提到了你!"
 
 show-item:
   hover-text: "&e点击查看详情"

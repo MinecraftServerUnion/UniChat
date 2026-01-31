@@ -3,6 +3,8 @@ package dev.onelili.unichat.velocity.module;
 import com.velocitypowered.api.proxy.Player;
 import dev.onelili.unichat.velocity.UniChat;
 import dev.onelili.unichat.velocity.channel.Channel;
+import dev.onelili.unichat.velocity.util.SimplePlayer;
+import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
@@ -12,39 +14,41 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class PatternModule {
-    public static final Map<String, PatternModule> modules = new ConcurrentHashMap<>();
+    private static final Map<String, PatternModule> modules = new ConcurrentHashMap<>();
 
-    public abstract Component handle(Player sender, boolean doProcess);
+    public abstract Component handle(Player sender, List<SimplePlayer> receivers);
+
+    public static void registerModule(String id, PatternModule module) {
+        modules.put(id, module);
+    }
 
     public static void registerDefaults() {
         modules.put("item", new ShowItemModule());
         modules.put("i", new ShowItemModule());
     }
 
-    public static @Nonnull Component handleMessage(@Nullable Player sender, @Nonnull String message, boolean doProcess) {
+    public static @Nonnull Component handleMessage(@Nullable Player sender, @Nonnull String message, List<SimplePlayer> receivers) {
         if(sender == null) return Component.text(message);
         StringBuilder current = new StringBuilder();
         Component result = Component.empty();
-
-        // doProcess disabled in cases such as /msg. Formats should be replaced but no events such as mentioning should be triggered
 
         outerFor: for (int i = 0; i < message.length(); i++) {
             char c = message.charAt(i);
             if(c == '@'){
                 if(Channel.getPlayerChannel(sender) != null) {
-                    List<Player> players = new ArrayList<>(UniChat.getProxy().getAllPlayers());
-                    players.sort(Comparator.comparingInt((Player p) -> p.getUsername().length()));
+                    List<SimplePlayer> players = new ArrayList<>(receivers);
+                    players.sort(Comparator.comparingInt((SimplePlayer p) -> p.getName().length()));
                     outer:
-                    for (Player p : players) {
-                        for (int j = 0; j < p.getUsername().length(); j++) {
-                            if (i + j + 1 >= message.length() || message.charAt(i + j + 1) != p.getUsername().charAt(j)) {
+                    for (SimplePlayer p : players) {
+                        for (int j = 0; j < p.getName().length(); j++) {
+                            if (i + j + 1 >= message.length() || message.charAt(i + j + 1) != p.getName().charAt(j)) {
                                 continue outer;
                             }
                         }
                         result = result.append(Component.text(current.toString()));
-                        result = result.append(MentionModule.mention(p, sender, doProcess));
+                        result = result.append(MentionModule.mention(p, sender));
                         current = new StringBuilder();
-                        i=i+p.getUsername().length();
+                        i=i+p.getName().length();
                         continue outerFor;
                     }
                 }
@@ -55,7 +59,7 @@ public abstract class PatternModule {
             } else if(c == ']') {
                 String moduleName = current.toString();
                 if(modules.containsKey(moduleName)){
-                    result = result.append(modules.get(moduleName).handle(sender, doProcess));
+                    result = result.append(modules.get(moduleName).handle(sender, receivers));
                 }else{
                     result = result.append(Component.text("[" + moduleName + "]"));
                 }

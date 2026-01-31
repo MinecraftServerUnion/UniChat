@@ -1,10 +1,11 @@
-package dev.onelili.unichat.velocity.channel.type;
+package dev.onelili.unichat.velocity.channel.type.serverwide;
 
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import dev.onelili.unichat.velocity.UniChat;
 import dev.onelili.unichat.velocity.channel.Channel;
 import dev.onelili.unichat.velocity.channel.ChannelHandler;
+import dev.onelili.unichat.velocity.channel.type.ServerWideChannelHandler;
 import dev.onelili.unichat.velocity.handler.ChatHistoryManager;
 import dev.onelili.unichat.velocity.message.Message;
 import dev.onelili.unichat.velocity.module.PatternModule;
@@ -12,7 +13,6 @@ import dev.onelili.unichat.velocity.util.PlaceholderUtil;
 import dev.onelili.unichat.velocity.util.ShitMountainException;
 import dev.onelili.unichat.velocity.util.SimplePlayer;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class RoomChannelHandler implements ChannelHandler {
+public class RoomChannelHandler extends ServerWideChannelHandler {
     public static Map<SimplePlayer, String> rooms = new ConcurrentHashMap<>();
 
     private final Channel channel;
@@ -33,27 +33,20 @@ public class RoomChannelHandler implements ChannelHandler {
     }
 
     @Override
-    public void handle(@NotNull SimplePlayer player, @NotNull String message) {
-        if(!rooms.containsKey(player))
-            throw new ShitMountainException("Player "+player.getName()+" is not in a room but somehow called room channel!");
-        Component msg = PatternModule.handleMessage(player.getPlayer(), message, true);
-        PlaceholderUtil.replacePlaceholders(channel.getChannelConfig().getString("format"), player.getPlayer()).thenAccept(text-> {
-            Component component = new Message(text)
-                    .add("player", player.getName())
-                    .add("room_code", rooms.get(player)).toComponent()
-                    .append(msg);
+    public List<SimplePlayer> getReceivers(SimplePlayer sender) {
+        return getPlayersInRoom(rooms.get(sender));
+    }
 
-            ChatHistoryManager.recordMessage(player.getName(),
-                    channel.getId(),
-                    rooms.get(player),
-                    LegacyComponentSerializer.legacyAmpersand().serialize(msg));
+    @Override
+    public Component getPrefix(String text, SimplePlayer sender) {
+        return new Message(text)
+                .add("player", sender.getName())
+                .add("room_code", rooms.get(sender)).toComponent();
+    }
 
-            for (SimplePlayer p : getPlayersInRoom(rooms.get(player))) {
-                if (channel.getReceivePermission() != null && !p.hasPermission(channel.getReceivePermission()))
-                    continue;
-                p.getPlayer().sendMessage(component);
-            }
-        });
+    @Override
+    public Channel getChannel() {
+        return channel;
     }
 
     public SimpleCommand getCommand(Channel channel) {

@@ -32,6 +32,7 @@ message: # /msg
   format-inbound: '<#47BFFB>%name% &8→ <#47BFFB>You&8: '
   format-outbound: '<#47BFFB>You &8→ <#47BFFB>%name%&8: '
   format-third-party: '<#47BFFB>%sender% &8→ <#47BFFB>%receiver%&8: '
+  log-console: true
   message-command:
     - msg
   reply-command:
@@ -40,6 +41,10 @@ message: # /msg
 
 chat-history:
   message-per-page: 10
+
+online-command: # Requires proxy restart
+  enabled: true
+  command: "online" # /online
 
 module:
   mention:

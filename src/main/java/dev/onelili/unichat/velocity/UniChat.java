@@ -14,6 +14,7 @@ import com.velocitypowered.api.proxy.ProxyServer;
 import dev.onelili.unichat.velocity.channel.Channel;
 import dev.onelili.unichat.velocity.command.ChatHistoryCommand;
 import dev.onelili.unichat.velocity.command.DirectMessageCommand;
+import dev.onelili.unichat.velocity.command.OnlineCommand;
 import dev.onelili.unichat.velocity.command.UniChatCommand;
 import dev.onelili.unichat.velocity.handler.*;
 import dev.onelili.unichat.velocity.message.MessageLoader;
@@ -33,7 +34,7 @@ import java.util.UUID;
 @Plugin(
         id = "unichat",
         name = "UniChat",
-        version = "1.2",
+        version = "1.2.1",
         authors = {
                 "oneLiLi",
                 "jason31416"
@@ -89,6 +90,7 @@ public class UniChat {
         DirectMessageCommand.registerCommand();
 
         getProxy().getCommandManager().register(getProxy().getCommandManager().metaBuilder("unichat").build(), new UniChatCommand());
+        if(Config.getBoolean("online-command.enabled")) getProxy().getCommandManager().register(getProxy().getCommandManager().metaBuilder(Config.getString("online-command.command")).build(), new OnlineCommand());
         getProxy().getCommandManager().register(getProxy().getCommandManager().metaBuilder("chathistory").aliases("chathist", "ch").build(), new ChatHistoryCommand());
 
         DatabaseHandler.init();

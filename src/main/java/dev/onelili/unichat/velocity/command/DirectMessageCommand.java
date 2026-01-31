@@ -12,6 +12,7 @@ import dev.onelili.unichat.velocity.module.PatternModule;
 import dev.onelili.unichat.velocity.util.Config;
 import dev.onelili.unichat.velocity.util.MapTree;
 import dev.onelili.unichat.velocity.util.ShitMountainException;
+import dev.onelili.unichat.velocity.util.SimplePlayer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -32,12 +33,12 @@ public class DirectMessageCommand implements SimpleCommand {
                 }
                 String target = invocation.arguments()[0];
                 String message = String.join(" ", List.of(invocation.arguments()).subList(1, invocation.arguments().length));
-                Component msg = PatternModule.handleMessage(null, message, false);
-                Component inbound = new Message(Config.getString("message.format-inbound")).add("name", "CONSOLE").toComponent()
-                        .append(msg),
-                        outbound = new Message(Config.getString("message.format-outbound")).add("name", target).toComponent()
-                                .append(msg);
                 if(UniChat.getProxy().getPlayer(target).isPresent()) {
+                    Component msg = PatternModule.handleMessage(null, message, List.of(new SimplePlayer(UniChat.getProxy().getPlayer(target).get())));
+                    Component inbound = new Message(Config.getString("message.format-inbound")).add("name", "CONSOLE").toComponent()
+                            .append(msg),
+                            outbound = new Message(Config.getString("message.format-outbound")).add("name", target).toComponent()
+                                    .append(msg);
                     UniChat.getProxy().getPlayer(target).get().sendMessage(inbound);
                     UniChat.getProxy().getConsoleCommandSource().sendMessage(outbound);
                 }else{
@@ -80,14 +81,15 @@ public class DirectMessageCommand implements SimpleCommand {
         }else{
             throw new ShitMountainException("Unknown command alias "+invocation.alias() +" in DirectMessageCommand");
         }
-        Component msg = PatternModule.handleMessage(sender, message, false);
+        var targetPlayer = UniChat.getProxy().getPlayer(target);
+        List<SimplePlayer> tlist = targetPlayer.map(player -> List.of(new SimplePlayer(player))).orElseGet(List::of);
+        Component msg = PatternModule.handleMessage(sender, message, tlist);
         Component inbound = new Message(Config.getString("message.format-inbound")).add("name", sender.getUsername()).toComponent()
                          .append(msg),
                  outbound = new Message(Config.getString("message.format-outbound")).add("name", target).toComponent()
                          .append(msg),
                  thirdparty = new Message(Config.getString("message.format-third-party")).add("sender", sender.getUsername()).add("receiver", target).toComponent()
                          .append(msg);
-        var targetPlayer = UniChat.getProxy().getPlayer(target);
         if(targetPlayer.isPresent()) {
             targetPlayer.get().sendMessage(inbound);
             lastMessage.put(targetPlayer.get().getUniqueId(), sender.getUsername());
@@ -106,7 +108,9 @@ public class DirectMessageCommand implements SimpleCommand {
         }
         sender.sendMessage(outbound);
         lastMessage.put(sender.getUniqueId(), target);
-        UniChat.getProxy().getConsoleCommandSource().sendMessage(thirdparty);
+        if(Config.getConfigTree().getBoolean("message.log-console", false)) {
+            UniChat.getProxy().getConsoleCommandSource().sendMessage(thirdparty);
+        }
     }
     public List<String> suggest(Invocation invocation) {
         if(!(invocation.source() instanceof Player)) return List.of();

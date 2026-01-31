@@ -85,7 +85,9 @@ public class RedisRemoteManager {
                                     thirdparty = new Message(Config.getString("message.format-third-party")).add("sender", sender+"&7@"+server).add("receiver", target).toComponent()
                                         .append(message);
                             UniChat.getProxy().getPlayer(target).get().sendMessage(inbound);
-                            UniChat.getProxy().getConsoleCommandSource().sendMessage(thirdparty);
+                            if(Config.getConfigTree().getBoolean("message.log-console", false)) {
+                                UniChat.getProxy().getConsoleCommandSource().sendMessage(thirdparty);
+                            }
                         }
                     }
                 }
@@ -141,13 +143,14 @@ public class RedisRemoteManager {
         onlinePlayerCache.putAll(newOnlinePlayers);
     }
 
-    public String fetchPlayerServer(String player){
+    public List<String> fetchPlayerServer(String player){
+        List<String> ret = new ArrayList<>();
         for(String i: onlinePlayerCache.keySet()) {
             if(onlinePlayerCache.get(i).contains(player)) {
-                return i;
+                ret.add(i);
             }
         }
-        return "null";
+        return ret;
     }
 
     public void shutdown(){
