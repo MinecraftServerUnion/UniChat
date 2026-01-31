@@ -7,14 +7,13 @@ import com.github.retrooper.packetevents.event.SimplePacketListenerAbstract;
 import com.github.retrooper.packetevents.event.simple.PacketPlayReceiveEvent;
 import com.github.retrooper.packetevents.event.simple.PacketPlaySendEvent;
 import com.github.retrooper.packetevents.protocol.ConnectionState;
-import com.github.retrooper.packetevents.protocol.advancements.AdvancementHolder;
-import com.github.retrooper.packetevents.protocol.advancements.AdvancementProgress;
 import com.github.retrooper.packetevents.protocol.chat.message.ChatMessage_v1_16;
+import com.github.retrooper.packetevents.protocol.component.ComponentTypes;
+import com.github.retrooper.packetevents.protocol.item.HashedStack;
 import com.github.retrooper.packetevents.protocol.item.ItemStack;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.protocol.packettype.PacketTypeCommon;
 import com.github.retrooper.packetevents.protocol.player.DiggingAction;
-import com.github.retrooper.packetevents.resources.ResourceLocation;
 import com.github.retrooper.packetevents.wrapper.play.client.*;
 import com.github.retrooper.packetevents.wrapper.play.server.*;
 import com.velocitypowered.api.proxy.Player;
@@ -22,10 +21,10 @@ import dev.onelili.unichat.velocity.UniChat;
 import dev.onelili.unichat.velocity.channel.Channel;
 import dev.onelili.unichat.velocity.gui.GUIContainer;
 import dev.onelili.unichat.velocity.util.Config;
-import dev.onelili.unichat.velocity.util.Logger;
 import dev.onelili.unichat.velocity.util.PlayerData;
 import dev.onelili.unichat.velocity.util.ShitMountainException;
 import lombok.SneakyThrows;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 
 import javax.annotation.Nonnull;
@@ -99,25 +98,38 @@ public class PacketEventListener extends SimplePacketListenerAbstract {
                 Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()))
                         .setHandItem(packet.getSlot());
             }
-            case SET_SLOT -> {
+            case SET_SLOT -> { // Not problematic
 //                listenTo(event, 1);
                 WrapperPlayServerSetSlot packet = new WrapperPlayServerSetSlot(event);
-                if(packet.getWindowId()==0) {
-                    Player player = event.getPlayer();
-                    Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()))
-                            .getInventory().put(packet.getSlot(), packet.getItem());
+                Player player = event.getPlayer();
+                var playerData = Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()));
+                int slot=packet.getSlot();
+                int additionalSize=playerData.getInventoryPreSizes().get(packet.getWindowId());
+                if(slot<additionalSize){
+                    playerData.getTopInventory().put(slot, packet.getItem());
+                }else {
+                    playerData.getInventory().put(slot - additionalSize, packet.getItem());
                 }
             }
-            case WINDOW_ITEMS -> {
+            case WINDOW_ITEMS -> { // Not problematic
                 WrapperPlayServerWindowItems packet = new WrapperPlayServerWindowItems(event);
                 Player player = event.getPlayer();
                 var playerData = Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()));
-                if(packet.getWindowId()==0) {
-                    for (int i = 0; i < packet.getItems().size(); i++) {
-                        playerData.getInventory().put(i, packet.getItems().get(i));
+//                System.out.println("WINDOW ITEMS: "+packet.getWindowId()+" sizeof "+packet.getItems().size());
+                if(packet.getItems().size()>=36) {
+                    for (int i = 0; i < 36; i++) {
+                        playerData.getInventory().put(i, packet.getItems().get(i+(packet.getItems().size() - 36-(packet.getWindowId()==0?1:0))));
+                    }
+                    playerData.getTopInventory().clear();
+                    for(int i=0;i<packet.getItems().size()-36-(packet.getWindowId()==0?1:0);i++) {
+                        playerData.getTopInventory().put(i, packet.getItems().get(i));
                     }
                 }
-                playerData.getInventorySizes().put(packet.getWindowId(), packet.getItems().size());
+                if(packet.getWindowId()==0) {
+                    playerData.getInventoryPreSizes().put(packet.getWindowId(), 9);
+                }else {
+                    playerData.getInventoryPreSizes().put(packet.getWindowId(), packet.getItems().size() - 36);
+                }
 //                System.out.println(packet.getWindowId()+": "+packet.getItems().size());
             }
             case CLOSE_WINDOW -> {
@@ -146,50 +158,46 @@ public class PacketEventListener extends SimplePacketListenerAbstract {
                 Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()))
                         .setHandItem(packet.getSlot());
             }
-            case CREATIVE_INVENTORY_ACTION -> {
+            case CREATIVE_INVENTORY_ACTION -> { // not problematic
                 WrapperPlayClientCreativeInventoryAction packet = new WrapperPlayClientCreativeInventoryAction(event);
                 Player player = event.getPlayer();
                 var playerData = Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()));
-                playerData.getInventory().put(packet.getSlot(), packet.getItemStack());
+                int additionalSize=playerData.getInventoryPreSizes().get(0);
+                playerData.getInventory().put(packet.getSlot()-additionalSize, packet.getItemStack());
             }
-            case PLAYER_DIGGING -> {
+            case PLAYER_DIGGING -> { // not problematic
                 WrapperPlayClientPlayerDigging packet = new WrapperPlayClientPlayerDigging(event);
                 Player player = event.getPlayer();
                 var playerData = Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()));
-                var mainhand = playerData.getInventory().get(playerData.getHandItem() + 36);
+                var mainhand = playerData.getInventory().get(playerData.getHandItem() + 27);
                 if(mainhand == null) return;
                 if(packet.getAction() == DiggingAction.DROP_ITEM){
-                    if(mainhand.getAmount()-1<=0) playerData.getInventory().remove(playerData.getHandItem() + 36);
+                    if(mainhand.getAmount()-1<=0) playerData.getInventory().remove(playerData.getHandItem() + 27);
                     else mainhand.setAmount(mainhand.getAmount()-1);
                 }else if(packet.getAction() == DiggingAction.DROP_ITEM_STACK){
-                    playerData.getInventory().remove(playerData.getHandItem() + 36);
+                    playerData.getInventory().remove(playerData.getHandItem() + 27);
                 }
             }
-            case CLICK_WINDOW -> {
+            case CLICK_WINDOW -> { // yes problematic
+                listenTo(event, debugLoggingDepth);
                 WrapperPlayClientClickWindow packet = new WrapperPlayClientClickWindow(event);
                 Player player = event.getPlayer();
-                System.out.println(packet.getWindowId()+": "+packet.getSlot());
-                if(packet.getWindowId()==0&&packet.getSlot()!=-999&&packet.getHashedSlots()!=null) {
-                    var playerData = Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()));
-                    packet.getHashedSlots().forEach((key, value) -> {
-                        if (value.isPresent()) {
-                            playerData.getInventory().put(key, value.get().asItemStack());
-                        } else {
-                            playerData.getInventory().remove(key);
-                        }
-                    });
-                }
-
+                var playerData = Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()));
                 GUIContainer[] gui = new GUIContainer[1];
                 GUIContainer.getGuis().stream().filter(obj -> obj.getData().windowId() == packet.getWindowId()).forEach(obj -> gui[0] = obj);
                 if(gui[0] != null) {
                     event.setCancelled(true);
                     List<ItemStack> items = new ArrayList<>();
-                    for(int i = 0; i <= gui[0].getData().slots() / 9 * 9; i++)
-                        if(gui[0].getData().items().get(i) != null)
+                    int guiSize=gui[0].getData().slots() / 9 * 9;
+                    for(int i = 0; i < guiSize; i++) {
+                        if (gui[0].getData().items().get(i) != null)
                             items.add(gui[0].getData().items().get(i));
                         else
                             items.add(ItemStack.EMPTY);
+                    }
+//                    for(int i=0;i<36;i++){
+//                        items.add(playerData.getInventory().getOrDefault(i, ItemStack.EMPTY));
+//                    }
                     WrapperPlayServerWindowItems wrapper1 = new WrapperPlayServerWindowItems(
                             packet.getWindowId(),
                             packet.getStateId().orElse(0),
@@ -197,12 +205,91 @@ public class PacketEventListener extends SimplePacketListenerAbstract {
                             null
                     );
                     PacketEvents.getAPI().getPlayerManager().sendPacket(player, wrapper1);
-                    //todo: 更新物品栏
+
+                    if(packet.getHashedSlots()!=null) {
+                        packet.getHashedSlots().forEach((k, v)->{
+                            if(k>=guiSize){
+                                PacketEvents.getAPI().getPlayerManager().sendPacket(player, new WrapperPlayServerSetSlot(
+                                        packet.getWindowId(),
+                                        packet.getStateId().orElse(0),
+                                        k,
+                                        playerData.getInventory().getOrDefault(k-guiSize, ItemStack.EMPTY)
+                                ));
+                            }
+                        });
+                    }
+                }else { // When dealing with actions here, items loses NBT
+                    System.out.print(packet.getWindowId() + ", " + playerData.getInventoryPreSizes().get(packet.getWindowId()) + ": (");
+                    packet.getHashedSlots().forEach((i, v) -> {
+                                v.ifPresent(hashedStack -> System.out.print(i + ":" + MiniMessage.miniMessage().serialize(hashedStack.asItemStack().getComponentOr(ComponentTypes.CUSTOM_NAME, hashedStack.asItemStack().getComponentOr(ComponentTypes.ITEM_NAME, Component.text("null")))) + ", "));
+                            }
+                    );
+                    System.out.println(")");
+
+                    int additionalSize = playerData.getInventoryPreSizes().get(packet.getWindowId());
+
+                    if (packet.getCarriedHashedStack().isPresent()) {
+                        System.out.println(MiniMessage.miniMessage().serialize(packet.getCarriedHashedStack().get().asItemStack().getComponentOr(ComponentTypes.CUSTOM_NAME, packet.getCarriedHashedStack().get().asItemStack().getComponentOr(ComponentTypes.ITEM_NAME, Component.text("null")))));
+                    }
+
+                    // This is to fix the missing NBT in this packet
+                    // In exactly one packet, the placed slots MUST come from the cursor, and the cursor MUST come from slot clicked
+                    // todo: Except the QUICK_MOVE action, which must be dealt independently
+
+                    ItemStack template;
+                    if(packet.getSlot()<additionalSize) {
+                        template = playerData.getTopInventory().getOrDefault(packet.getSlot(), ItemStack.EMPTY).copy();
+                    }else{
+                        template = playerData.getInventory().getOrDefault(packet.getSlot()-additionalSize, ItemStack.EMPTY).copy();
+                    }
+
+                    if(template!=ItemStack.EMPTY&&packet.getWindowClickType()== WrapperPlayClientClickWindow.WindowClickType.QUICK_MOVE){
+                        playerData.setCursor(template.copy());
+                    }
+
+                    if (packet.getHashedSlots() != null) {
+                        packet.getHashedSlots().forEach((key, value) -> {
+                            ItemStack stack;
+                            if(value.isPresent()){
+                                assert playerData.getCursor()!=null;
+                                stack = playerData.getCursor().copy();
+                                stack.setAmount(value.get().getCount());
+                            }else{
+                                stack = ItemStack.EMPTY;
+                            }
+                            if (key < additionalSize) {
+//                                System.out.println("Value " + key + " is outside of container");
+                                playerData.getTopInventory().put(key, stack);
+                            }else {
+//                                System.out.println("Putting " + value.get().asItemStack() + " to " + (key - additionalSize));
+                                playerData.getInventory().put(key - additionalSize, stack);
+                            }
+                        });
+                    }
+
+                    // Update cursor status
+                    if(packet.getCarriedHashedStack().isPresent() &&
+                            template!=ItemStack.EMPTY) { // Empty check to exclude when right clicking to partially deposit
+                        var cloned = template.copy();
+                        cloned.setAmount(packet.getCarriedHashedStack().get().getCount());
+                        playerData.setCursor(cloned);
+                    }else if(packet.getCarriedHashedStack().isPresent() &&template==ItemStack.EMPTY) {
+                        var cloned = playerData.getCursor().copy();
+                        cloned.setAmount(packet.getCarriedHashedStack().get().getCount());
+                        playerData.setCursor(cloned);
+                    }else if(packet.getCarriedHashedStack().isEmpty()){
+                        playerData.setCursor(null);
+                    }
                 }
             }
             case CLOSE_WINDOW -> {
                 WrapperPlayClientCloseWindow packet = new WrapperPlayClientCloseWindow(event);
                 try {
+                    if(packet.getWindowId()!=0) {
+                        var playerData = PlayerData.getPlayerData(event.getPlayer());
+
+                        playerData.getInventoryPreSizes().remove(packet.getWindowId());
+                    }
                     GUIContainer.getGuis().remove(GUIContainer.getGuis().stream().filter(gui -> gui.getData().windowId() == packet.getWindowId()).findFirst().orElseThrow(() -> new ShitMountainException("null")));
                 } catch(Exception ignored) {}
             }

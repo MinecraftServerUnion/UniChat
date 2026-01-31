@@ -4,6 +4,8 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.player.PlayerChatEvent;
+import com.velocitypowered.api.proxy.ServerConnection;
+import com.velocitypowered.api.proxy.server.ServerInfo;
 import dev.onelili.unichat.velocity.UniChat;
 import dev.onelili.unichat.velocity.channel.Channel;
 import dev.onelili.unichat.velocity.channel.type.serverwide.LocalChannelHandler;
@@ -14,6 +16,7 @@ import dev.onelili.unichat.velocity.util.Config;
 import dev.onelili.unichat.velocity.util.PlaceholderUtil;
 import dev.onelili.unichat.velocity.util.PlayerData;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -53,11 +56,11 @@ public class EventListener {
         }
         if (!channel.isPassthrough()) event.setResult(PlayerChatEvent.ChatResult.denied());
         else{
-            if(channel.getHandler() instanceof LocalChannelHandler) {
-                if (channel.isLogToConsole()) {
-                    Component msg = PatternModule.handleMessage(event.getPlayer(), message, List.of());
+            if (channel.getChannelConfig().getBoolean("respect-backend", true)) {
+                Component msg = PatternModule.handleMessage(event.getPlayer(), message, List.of());
+                if(channel.isLogToConsole()) {
                     PlaceholderUtil.replacePlaceholders(channel.getChannelConfig().getString("format"), event.getPlayer())
-                            .thenAccept(text->{
+                            .thenAccept(text -> {
                                 Component component = new Message(text)
                                         .add("player", event.getPlayer().getUsername())
                                         .add("channel", channel.getDisplayName())
@@ -65,8 +68,10 @@ public class EventListener {
                                 UniChat.getProxy().getConsoleCommandSource().sendMessage(component);
                             });
                 }
-
-                ChatHistoryManager.recordMessage(event.getPlayer().getUsername(), channel.getId(), event.getPlayer().getCurrentServer().get().getServerInfo().getName(), message);
+                ChatHistoryManager.recordMessage(event.getPlayer().getUsername(),
+                        channel.getId(),
+                        event.getPlayer().getCurrentServer().map(ServerConnection::getServerInfo).map(ServerInfo::getName).orElse("Unknown"),
+                        LegacyComponentSerializer.legacyAmpersand().serialize(msg));
             }
 
             if(channel.getChannelConfig().getBoolean("respect-backend", true)) {

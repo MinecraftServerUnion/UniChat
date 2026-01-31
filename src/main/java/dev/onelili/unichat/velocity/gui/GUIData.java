@@ -37,7 +37,7 @@ public class GUIData {
             if(i == 13)
                 items.put(i, item);
             else
-                items.put(i, ItemStack.builder().type(ItemTypes.BLACK_STAINED_GLASS_PANE).build());
+                items.put(i, ItemStack.builder().type(ItemTypes.GRAY_STAINED_GLASS_PANE).build());
         return builder()
                 .title(Optional.ofNullable(title).orElse(Component.empty()))
                 .slots(27)

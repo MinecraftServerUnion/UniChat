@@ -39,7 +39,7 @@ public class MentionModule {
                 }
                 bossBar.progress(progress.floatValue());
             }).repeat(Duration.ofMillis(50)).schedule();
-            PacketEvents.getAPI().getPlayerManager().sendPacket(player, new WrapperPlayServerSoundEffect(
+            PacketEvents.getAPI().getPlayerManager().sendPacket(player.getPlayer(), new WrapperPlayServerSoundEffect(
                     new StaticSound(new ResourceLocation(Config.getString("module.mention.sound-effect-id")), null),
                     SoundCategory.MASTER,
                     Objects.requireNonNull(PlayerData.getPlayerData(player.getPlayer())).toPacketPosition(),
@@ -88,8 +88,8 @@ public class MentionModule {
                     true
             );
 
-            PacketEvents.getAPI().getPlayerManager().sendPacket(player, packet);
-            PacketEvents.getAPI().getPlayerManager().sendPacket(player, removePacket);
+            PacketEvents.getAPI().getPlayerManager().sendPacket(player.getPlayer(), packet);
+            PacketEvents.getAPI().getPlayerManager().sendPacket(player.getPlayer(), removePacket);
         }catch(Exception e){
             e.printStackTrace();
         }

@@ -55,9 +55,8 @@ public abstract class PatternModule {
             } else if(c == '[') {
                 result = result.append(Component.text(current.toString()));
                 current = new StringBuilder();
-                continue;
-            } else if(c == ']') {
-                String moduleName = current.toString();
+            } else if(c == ']' && current.charAt(0) == '[') {
+                String moduleName = current.substring(1);
                 if(modules.containsKey(moduleName)){
                     result = result.append(modules.get(moduleName).handle(sender, receivers));
                 }else{

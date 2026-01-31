@@ -29,18 +29,21 @@ public abstract class ServerWideChannelHandler implements ChannelHandler {
                     Component cmp = PatternModule.handleMessage(player.getPlayer(), message, receivers);
                     Component component = getPrefix(text, player).append(cmp);
 
-                    ChatHistoryManager.recordMessage(player.getName(),
-                            getChannel().getId(),
-                            player.getCurrentServer(),
-                            LegacyComponentSerializer.legacyAmpersand().serialize(cmp));
+                    if(!getChannel().isPassthrough() || !getChannel().getChannelConfig().getBoolean("respect-backend", true)){
+                        ChatHistoryManager.recordMessage(player.getName(),
+                                getChannel().getId(),
+                                player.getCurrentServer(),
+                                LegacyComponentSerializer.legacyAmpersand().serialize(cmp));
+
+                        if (getChannel().isLogToConsole())
+                            UniChat.getProxy().getConsoleCommandSource().sendMessage(component);
+                    }
 
                     for(SimplePlayer receiver : receivers) {
                         if(getChannel().getReceivePermission() != null&&!receiver.hasPermission(getChannel().getReceivePermission()))
                             continue;
                         receiver.getPlayer().sendMessage(component, ChatType.CHAT.bind(component));
                     }
-                    if(getChannel().isLogToConsole())
-                        UniChat.getProxy().getConsoleCommandSource().sendMessage(component);
                 });
     }
 }
