@@ -104,7 +104,9 @@ public class PacketEventListener extends SimplePacketListenerAbstract {
                 Player player = event.getPlayer();
                 var playerData = Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()));
                 int slot=packet.getSlot();
-                int additionalSize=playerData.getInventoryPreSizes().get(packet.getWindowId());
+                int additionalSize;
+                if(packet.getWindowId()==0) additionalSize=9;
+                else additionalSize = playerData.getInventoryPreSizes().get(packet.getWindowId());
                 if(slot<additionalSize){
                     playerData.getTopInventory().put(slot, packet.getItem());
                 }else {
@@ -179,7 +181,7 @@ public class PacketEventListener extends SimplePacketListenerAbstract {
                 }
             }
             case CLICK_WINDOW -> { // yes problematic
-                listenTo(event, debugLoggingDepth);
+//                listenTo(event, debugLoggingDepth);
                 WrapperPlayClientClickWindow packet = new WrapperPlayClientClickWindow(event);
                 Player player = event.getPlayer();
                 var playerData = Objects.requireNonNull(PlayerData.getPlayerDataMap().computeIfAbsent(player.getUniqueId(), uuid -> new PlayerData()));
@@ -219,12 +221,12 @@ public class PacketEventListener extends SimplePacketListenerAbstract {
                         });
                     }
                 }else { // When dealing with actions here, items loses NBT
-                    System.out.print(packet.getWindowId() + ", " + playerData.getInventoryPreSizes().get(packet.getWindowId()) + ": (");
-                    packet.getHashedSlots().forEach((i, v) -> {
-                                v.ifPresent(hashedStack -> System.out.print(i + ":" + MiniMessage.miniMessage().serialize(hashedStack.asItemStack().getComponentOr(ComponentTypes.CUSTOM_NAME, hashedStack.asItemStack().getComponentOr(ComponentTypes.ITEM_NAME, Component.text("null")))) + ", "));
-                            }
-                    );
-                    System.out.println(")");
+//                    System.out.print(packet.getWindowId() + ", " + playerData.getInventoryPreSizes().get(packet.getWindowId()) + ": (");
+//                    packet.getHashedSlots().forEach((i, v) -> {
+//                                v.ifPresent(hashedStack -> System.out.print(i + ":" + MiniMessage.miniMessage().serialize(hashedStack.asItemStack().getComponentOr(ComponentTypes.CUSTOM_NAME, hashedStack.asItemStack().getComponentOr(ComponentTypes.ITEM_NAME, Component.text("null")))) + ", "));
+//                            }
+//                    );
+//                    System.out.println(")");
 
                     int additionalSize = playerData.getInventoryPreSizes().get(packet.getWindowId());
 
