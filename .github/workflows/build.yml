@@ -1,5 +1,7 @@
 name: UniChat Build
 
+permissions: write-all
+
 on:
   push:
     branches: [ "main" ]
