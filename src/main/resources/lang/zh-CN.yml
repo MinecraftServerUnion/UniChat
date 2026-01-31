@@ -19,6 +19,14 @@ command:
 
   channel-not-found: "<#CC1613>错误: <#F85654>该频道不存在!"
 
+  mute-command-usage: "&c用法: /chatx mute <player> [time(w|d|h|m|s)] [reason]"
+  mute-command-time: "<#CC1613>错误: <#F85654>错误的时间格式! 例子: 1d5h -> 一天又五个小时"
+  mute-command-success: "<#47BFFB>成功将 <#35CEE9>%player%<#47BFFB> 禁言了 <#35CEE9>%time%<#47BFFB>!"
+
+  unmute-command-usage: "&c用法: /chatx unmute <player>"
+  target-not-muted: "<#CC1613>错误: <#F85654>该玩家没有被禁言!"
+  unmute-command-success: "<#47BFFB>成功取消了 <#35CEE9>%player%<#47BFFB> 的禁言!"
+
   chat-history:
     channel-header: "&7====== <#47BFFB>聊天记录 - 频道列表 &7======"
     channel-item: "&7- <#47BFFB><click:run_command:'/chathistory %channel_id%'>%channel_name%</click>"
@@ -56,3 +64,5 @@ chat:
   channel-declined: "<#CC1613>错误: <#F85654>在此服务器无法通过该频道发送消息! &e&l<click:run_command:'/l'>[切换频道]</click>"
   no-send-permission: "<#CC1613>错误: <#F85654>你没有在该频道发送消息的权限! &e&l<click:run_command:'/l'>[切换频道]</click>"
   cannot-command-send-passthrough: "<#CC1613>错误: <#F85654>该频道不允许通过命令发送消息!"
+  player-is-muted: "<#F85654>您已被管理员限制发言! 剩余 %time_left%"
+  rate-limited: "<#F85654>您的发言过于频繁，请等待一会再发言!"

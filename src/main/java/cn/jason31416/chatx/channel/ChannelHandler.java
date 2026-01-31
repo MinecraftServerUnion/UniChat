@@ -1,5 +1,7 @@
 package cn.jason31416.chatx.channel;
 
+import cn.jason31416.chatx.handler.PunishmentHandler;
+import cn.jason31416.chatx.util.TimeUtil;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import cn.jason31416.chatx.channel.type.serverwide.RoomChannelHandler;
@@ -18,6 +20,13 @@ public interface ChannelHandler {
             if(channel.getSendPermission()!=null&&!invocation.source().hasPermission(channel.getSendPermission())){
                 invocation.source().sendMessage(Message.getMessage("chat.no-send-permission").toComponent());
                 return;
+            }
+            if(invocation.source() instanceof Player sender) {
+                long timeMuted= PunishmentHandler.fetchMuted(new SimplePlayer(sender));
+                if(timeMuted!=-1){
+                    sender.sendMessage(Message.getMessage("chat.player-is-muted").add("time_left", TimeUtil.displayMillis(timeMuted-System.currentTimeMillis())).toComponent());
+                    return;
+                }
             }
             if (invocation.arguments().length == 0) {
                 if (!(invocation.source() instanceof Player pl)) {

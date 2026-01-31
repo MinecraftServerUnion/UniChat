@@ -4,6 +4,7 @@ import cn.jason31416.chatx.ChatX;
 import cn.jason31416.chatx.channel.Channel;
 import cn.jason31416.chatx.channel.ChannelHandler;
 import cn.jason31416.chatx.handler.ChatHistoryManager;
+import cn.jason31416.chatx.message.Message;
 import cn.jason31416.chatx.module.PatternModule;
 import cn.jason31416.chatx.util.PlaceholderUtil;
 import cn.jason31416.chatx.util.SimplePlayer;
@@ -21,6 +22,10 @@ public abstract class ServerWideChannelHandler implements ChannelHandler {
 
     @Override
     public void handle(@Nonnull SimplePlayer player, @Nonnull String message) {
+        if(getChannel().getRateLimiter()!=null&&!getChannel().getRateLimiter().invoke(player.getName())){
+            player.sendMessage(Message.getMessage("chat.rate-limited"));
+            return;
+        }
         PlaceholderUtil.replacePlaceholders(getChannel().getChannelConfig().getString("format"), player.getPlayer())
                 .thenAccept(text->{
                     List<SimplePlayer> receivers = getReceivers(player);

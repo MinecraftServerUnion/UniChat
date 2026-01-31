@@ -70,6 +70,12 @@ public class Channel {
     @Builder.Default
     @Nullable
     private String receivePermission = null;
+    @Builder.Default
+    private int rateLimitTime = 0;
+    @Builder.Default
+    private int rateLimitCount = 0;
+    @Builder.Default
+    private RateLimiter rateLimiter=null;
 
     public MapTree getChannelConfig() {
         return Config.getChannelTree().getSection(id);
@@ -99,7 +105,11 @@ public class Channel {
                         .receivePermission(Config.getChannelTree().getString(i + ".receive-permission", null))
                         .sendPermission(Config.getChannelTree().getString(i + ".send-permission", null))
                         .passthrough(Config.getChannelTree().getBoolean(i + ".passthrough", false))
+                        .rateLimitTime(Config.getChannelTree().getInt(i + ".rate-limit.time", 0))
+                        .rateLimitCount(Config.getChannelTree().getInt(i + ".rate-limit.count", 0))
                         .build();
+                if(channel.rateLimitTime!=0)
+                    channel.rateLimiter = new RateLimiter(channel.rateLimitTime*1000L, channel.rateLimitCount);
                 channel.handler = channelTypes.get(Config.getChannelTree().getString(i + ".type").toLowerCase(Locale.ROOT)).apply(channel);
                 if(Config.getChannelTree().contains(i + ".restricted-servers")) {
                     channel.restrictedServers = (List<String>) Config.getChannelTree().get(i + ".restricted-servers");

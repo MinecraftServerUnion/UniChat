@@ -19,6 +19,14 @@ command:
 
   channel-not-found: "<#CC1613>Error: <#F85654>This channel does not exist!"
 
+  mute-command-usage: "&cUsage: /chatx mute <player> [time(w|d|h|m|s)] [reason]"
+  mute-command-time: "<#CC1613>Error: <#F85654>Invalid time format! Example: 1d5h -> one day and five hours"
+  mute-command-success: "<#47BFFB>Successfully muted <#35CEE9>%player%<#47BFFB> for <#35CEE9>%time%<#47BFFB>!"
+
+  unmute-command-usage: "&cUsage: /chatx unmute <player>"
+  target-not-muted: "<#CC1613>Error: <#F85654>This player is not muted!"
+  unmute-command-success: "<#47BFFB>Successfully unmuted <#35CEE9>%player%<#47BFFB>!"
+
   chat-history:
     channel-header: "&7====== <#47BFFB>Chat History - Channel List &7======"
     channel-item: "&7- <#47BFFB><click:run_command:'/chathistory %channel_id%'>%channel_name%</click>"
@@ -44,8 +52,16 @@ show-item:
   hover-text: "&eClick to view details"
   window-title: "Item Details"
 
+player-info:
+  - "&7Ping: &f%ping% ms"
+  - "&7Current server: &f%server%"
+  - ""
+  - "&7&o%uuid%"
+
 chat:
   console-name: "CONSOLE"
   channel-declined: "<#CC1613>Error: <#F85654>Cannot send messages through this channel on this server! &e&l<click:run_command:'/l'>[Switch Channel]</click>"
   no-send-permission: "<#CC1613>Error: <#F85654>You don't have permission to send messages in this channel! &e&l<click:run_command:'/l'>[Switch Channel]</click>"
   cannot-command-send-passthrough: "<#CC1613>Error: <#F85654>This channel does not allow sending messages via command!"
+  player-is-muted: "<#F85654>You have been muted by an administrator! Remaining: %time_left%"
+  rate-limited: "<#F85654>You are sending messages too frequently, please wait a moment!"

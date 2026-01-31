@@ -39,6 +39,10 @@ public class RedisChannelHandler implements ChannelHandler {
 
     @Override
     public void handle(@Nonnull SimplePlayer player, @Nonnull String message) {
+        if(channel.getRateLimiter()!=null&&!channel.getRateLimiter().invoke(player.getName())){
+            player.sendMessage(Message.getMessage("chat.rate-limited"));
+            return;
+        }
         MapTree cont = new MapTree()
                 .put("msg", MiniMessage.miniMessage().serialize(PatternModule.handleMessage(player.getPlayer(), message, List.of())))
                 .put("sender", player.getName())

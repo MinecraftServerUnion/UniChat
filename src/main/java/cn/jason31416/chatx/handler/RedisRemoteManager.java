@@ -16,6 +16,7 @@ import redis.clients.jedis.JedisPooled;
 import redis.clients.jedis.JedisPubSub;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -23,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 @Getter
 public class RedisRemoteManager {
-    @Getter @Setter
+    @Getter @Setter @Nullable
     private static RedisRemoteManager instance=null;
 
     private final String address;

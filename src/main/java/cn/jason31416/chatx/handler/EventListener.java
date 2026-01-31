@@ -1,5 +1,6 @@
 package cn.jason31416.chatx.handler;
 
+import cn.jason31416.chatx.util.*;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
@@ -11,9 +12,6 @@ import cn.jason31416.chatx.channel.Channel;
 import cn.jason31416.chatx.command.DirectMessageCommand;
 import cn.jason31416.chatx.message.Message;
 import cn.jason31416.chatx.module.PatternModule;
-import cn.jason31416.chatx.util.Config;
-import cn.jason31416.chatx.util.PlaceholderUtil;
-import cn.jason31416.chatx.util.PlayerData;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
@@ -25,6 +23,13 @@ public class EventListener {
     @Subscribe(priority = Short.MIN_VALUE)
     public void onPlayerChat(@Nonnull PlayerChatEvent event) {
         if(!event.getResult().isAllowed()) return;
+        long timemuted = PunishmentHandler.fetchMuted(new SimplePlayer(event.getPlayer()));
+        if(timemuted!=-1){
+//            System.out.println(timemuted+" "+System.currentTimeMillis());
+            event.getPlayer().sendMessage(Message.getMessage("chat.player-is-muted").add("time_left", TimeUtil.displayMillis(timemuted-System.currentTimeMillis())).toComponent());
+            event.setResult(PlayerChatEvent.ChatResult.denied());
+            return;
+        }
         Channel channel;
         String message;
         if (Channel.channelPrefixes.containsKey(event.getMessage().substring(0, 1))) {

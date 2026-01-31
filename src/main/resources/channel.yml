@@ -22,6 +22,9 @@ global:
   commands:
     - global
     - g
+  rate-limit: # Optional per-player antispam mechanism
+    count: 3 # How many messages can be sent within a narrow window of time
+    time: 7 # In seconds, how long before the count resets.
   # If a player's message starts with the following content, it will automatically remove that prefix and send the message to this channel, ignoring the player's actual current channel
   prefixes:
     - "!"

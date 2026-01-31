@@ -17,12 +17,12 @@ public class PlayerInfoModule extends PatternModule{
     public Component handle(Player sender, List<SimplePlayer> receivers) {
         Component ret=Component.empty(), hover=Component.empty();
         ret = ret.append(Component.text("["+sender.getUsername()+"]").color(NamedTextColor.WHITE));
-        for(String i: MessageLoader.getList("player-info")){
-            hover.append(new Message(i)
+        for(String i: MessageLoader.getMessageConfig().getStringList("player-info")){
+            hover = hover.append(new Message(i)
                     .add("ping", sender.getPing())
                     .add("server", sender.getCurrentServer().map(ServerConnection::getServerInfo).map(ServerInfo::getName).orElse("Unknown"))
                     .add("uuid", sender.getUniqueId().toString())
-                    .toComponent());
+                    .toComponent()).appendNewline();
         }
         return ret.hoverEvent(HoverEvent.showText(hover));
     }

@@ -1,5 +1,7 @@
 package cn.jason31416.chatx.channel.type.serverwide;
 
+import cn.jason31416.chatx.handler.PunishmentHandler;
+import cn.jason31416.chatx.util.TimeUtil;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
 import cn.jason31416.chatx.ChatX;
@@ -53,6 +55,13 @@ public class RoomChannelHandler extends ServerWideChannelHandler {
                 if(channel.getSendPermission()!=null&&!pl.hasPermission(channel.getSendPermission())){
                     pl.sendMessage(Message.getMessage("chat.no-send-permission").toComponent());
                     return;
+                }
+                if(invocation.source() instanceof Player sender) {
+                    long timeMuted= PunishmentHandler.fetchMuted(new SimplePlayer(sender));
+                    if(timeMuted!=-1){
+                        sender.sendMessage(Message.getMessage("chat.player-is-muted").add("time_left", TimeUtil.displayMillis(timeMuted-System.currentTimeMillis())).toComponent());
+                        return;
+                    }
                 }
                 if (invocation.arguments().length == 0 || invocation.arguments()[0].equals("create")) {
                     String roomCode = "" + new Random().nextInt(1000, 9999);

@@ -4,6 +4,7 @@ import cn.jason31416.chatx.handler.DatabaseHandler;
 import cn.jason31416.chatx.handler.EventListener;
 import cn.jason31416.chatx.handler.PacketEventListener;
 import cn.jason31416.chatx.handler.RedisRemoteManager;
+import cn.jason31416.chatx.util.RateLimiter;
 import com.github.retrooper.packetevents.PacketEvents;
 import com.google.inject.Inject;
 import com.velocitypowered.api.command.CommandMeta;
@@ -34,6 +35,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Plugin(
         id = "chatx",
@@ -41,7 +43,8 @@ import java.util.UUID;
         version = "1.2.1",
         authors = {
                 "oneLiLi",
-                "jason31416"
+                "jason31416",
+                "Neokoni"
         },
         dependencies = {
                 @Dependency(id = "packetevents", optional = true),
@@ -76,6 +79,12 @@ public class ChatX {
         if(Config.getConfigTree().getBoolean("redis.enabled", false)){
             RedisRemoteManager.setInstance(new RedisRemoteManager());
         }
+
+        getProxy().getScheduler().buildTask(this, ()->{
+            for(var i: RateLimiter.limiters){
+                i.checkCache();
+            }
+        }).repeat(10, TimeUnit.MINUTES).schedule();
 
         PlaceholderUtil.init();
 

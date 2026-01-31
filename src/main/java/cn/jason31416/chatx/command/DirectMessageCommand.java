@@ -1,5 +1,7 @@
 package cn.jason31416.chatx.command;
 
+import cn.jason31416.chatx.handler.PunishmentHandler;
+import cn.jason31416.chatx.util.*;
 import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.Player;
@@ -9,10 +11,6 @@ import cn.jason31416.chatx.handler.ChatHistoryManager;
 import cn.jason31416.chatx.handler.RedisRemoteManager;
 import cn.jason31416.chatx.message.Message;
 import cn.jason31416.chatx.module.PatternModule;
-import cn.jason31416.chatx.util.Config;
-import cn.jason31416.chatx.util.MapTree;
-import cn.jason31416.chatx.util.ShitMountainException;
-import cn.jason31416.chatx.util.SimplePlayer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -45,6 +43,11 @@ public class DirectMessageCommand implements SimpleCommand {
                     invocation.source().sendMessage(Message.getMessage("command.player-not-found").add("player", target).toComponent());
                 }
             }
+            return;
+        }
+        long timeMuted=PunishmentHandler.fetchMuted(new SimplePlayer(sender));
+        if(timeMuted!=-1){
+            sender.sendMessage(Message.getMessage("chat.player-is-muted").add("time_left", TimeUtil.displayMillis(timeMuted-System.currentTimeMillis())).toComponent());
             return;
         }
         String target;
@@ -120,7 +123,8 @@ public class DirectMessageCommand implements SimpleCommand {
                 if(invocation.arguments().length<1||invocation.arguments()[0].isEmpty()){
                     return new ArrayList<>(ret);
                 }
-                ret.addAll(RedisRemoteManager.getInstance().getOnlinePlayers());
+                if(RedisRemoteManager.getInstance()!=null)
+                    ret.addAll(RedisRemoteManager.getInstance().getOnlinePlayers());
                 return ret.stream().filter(s->s.toLowerCase(Locale.ROOT).startsWith(invocation.arguments()[0].toLowerCase(Locale.ROOT))).toList();
             }
         }
